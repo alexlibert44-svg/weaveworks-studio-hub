@@ -115,7 +115,9 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
 }
 
 export function unitState(unit: ReviewUnit, now?: Date): ReviewState {
-  return reviewState(unit.nextReviewAt, Boolean(unit.session), now);
+  // Only a scheduled review left unfinished counts as ignored; an unfinished
+  // first-time learning run is ordinary training.
+  return reviewState(unit.nextReviewAt, unit.session?.purpose === "review", now);
 }
 
 /**

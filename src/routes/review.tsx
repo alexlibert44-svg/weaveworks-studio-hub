@@ -97,14 +97,21 @@ function ReviewPage() {
 
   const all = units ?? [];
   const byState = (u: ReviewUnit) => unitState(u, now);
-  const due = all
-    .filter((u) => byState(u) === "due" || byState(u) === "overdue")
-    .sort((a, b) => (a.nextReviewAt ?? "").localeCompare(b.nextReviewAt ?? ""));
-  const ignored = all.filter((u) => byState(u) === "ignored");
-  const forms = all.filter((u) => u.kind === "forms");
+  // Each unit lands in exactly one place, from its persisted schedule/session.
+  const byDate = (a: ReviewUnit, b: ReviewUnit) =>
+    (a.nextReviewAt ?? "9").localeCompare(b.nextReviewAt ?? "9");
+  const due = all.filter((u) => u.kind === "words" && byState(u) === "due").sort(byDate);
+  // Ignored: a scheduled review left unfinished, or one skipped past its day.
+  const ignored = all
+    .filter((u) => byState(u) === "ignored" || byState(u) === "overdue")
+    .sort(byDate);
+  const forms = all.filter((u) => u.kind === "forms" && byState(u) === "due").sort(byDate);
   const upcoming = all
-    .filter((u) => byState(u) === "upcoming" && u.kind === upcomingTab)
-    .sort((a, b) => (a.nextReviewAt ?? "").localeCompare(b.nextReviewAt ?? ""));
+    .filter((u) => {
+      const s = byState(u);
+      return (s === "upcoming" || s === "unscheduled") && u.kind === upcomingTab;
+    })
+    .sort(byDate);
 
   return (
     <AppShell>
@@ -121,7 +128,7 @@ function ReviewPage() {
               options={[
                 { key: "due", label: t("review.tabDue"), count: due.length },
                 { key: "ignored", label: t("review.tabIgnored"), count: ignored.length },
-                { key: "forms", label: t("review.tabForms") },
+                { key: "forms", label: t("review.tabForms"), count: forms.length },
               ]}
             />
             {main === "due" ? (
@@ -129,7 +136,7 @@ function ReviewPage() {
             ) : main === "ignored" ? (
               <UnitList units={ignored} now={now} empty={t("review.emptyIgnored")} />
             ) : (
-              <UnitList units={forms} now={now} empty={t("review.emptyForms")} />
+              <UnitList units={forms} now={now} empty={t("review.emptyDue")} />
             )}
           </section>
 
