@@ -40,6 +40,8 @@ export interface ReviewUnit {
   nextReviewAt: string | null;
   lastReviewedAt: string | null;
   session: ReviewSession | null;
+  /** Every item in the group (not only due ones). */
+  total: number;
 }
 
 interface SetScheduleRow {

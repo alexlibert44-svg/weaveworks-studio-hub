@@ -114,6 +114,8 @@ function SetDetail() {
       ? "mastered"
       : "learning";
   const wordsWithForms = words.filter((w) => forms.some((f) => f.word_id === w.id));
+  const formCount = new Set(forms.filter((f) => words.some((w) => w.id === f.word_id)).map((f) => f.id)).size;
+  const counts = { words: words.length, forms: formCount };
 
   return (
     <AppShell>
@@ -138,7 +140,7 @@ function SetDetail() {
       <div className="mt-2 flex items-center gap-2">
         <StatePill state={status} />
         <span className="text-sm text-muted-foreground">
-          {t("sets.wordCount", { count: words.length })}
+          {t("sets.totalItems", { count: words.length + formCount })}
         </span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -160,7 +162,7 @@ function SetDetail() {
                tab === key ? "bg-primary-soft text-primary-deep" : "text-foreground hover:bg-card",
             )}
           >
-            {t(key === "words" ? "set.tabWords" : "set.tabForms")}
+            {t(key === "words" ? "set.tabWords" : "set.tabForms")} ({counts[key]})
           </button>
         ))}
       </div>
