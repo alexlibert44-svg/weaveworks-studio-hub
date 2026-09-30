@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Flame, Plus, Sparkles, Target } from "lucide-react";
+
+import { ReviewUnitCard } from "@/components/verba/ReviewUnitCard";
+import { unitState } from "@/lib/verba/reviews";
+import { useReviewUnits } from "@/lib/verba/use-review-units";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +13,7 @@ import { AppShell } from "@/components/verba/AppShell";
 import { useLearner } from "@/components/verba/AppGate";
 import { StatePill } from "@/components/verba/MasteryPill";
 import { useI18n } from "@/lib/i18n";
-import { getDailyProgress, getDueBreakdown, listSets } from "@/lib/verba/api";
-import { SKILL_KEY, type Skill } from "@/lib/verba/types";
+import { getDailyProgress, listSets } from "@/lib/verba/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,9 +55,10 @@ function Home() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const { data: due } = useQuery({
-    queryKey: ["due", deviceId],
-    queryFn: () => getDueBreakdown(deviceId),
+  const { units, now } = useReviewUnits(deviceId);
+  const due = units?.filter((u) => {
+    const state = unitState(u, now);
+    return state === "due" || state === "overdue";
   });
   const { data: sets } = useQuery({
     queryKey: ["sets", deviceId],
@@ -103,18 +107,20 @@ function Home() {
         </div>
       </div>
 
-      <h2 className="mt-7 mb-3 text-lg font-bold">{t("home.dueTitle")}</h2>
+      <div className="mt-7 mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-bold">{t("home.dueTitle")}</h2>
+        <Link to="/review" className="text-sm font-semibold text-primary">
+          {t("home.viewAll")}
+        </Link>
+      </div>
       {due ? (
-        due.total > 0 ? (
-          <ul className="grid grid-cols-2 gap-2">
-            {(Object.entries(due.bySkill) as [Skill, number][])
-              .filter(([, count]) => count > 0)
-              .map(([skill, count]) => (
-                <li key={skill} className="card-surface flex items-center justify-between p-3.5">
-                  <span className="text-sm font-semibold">{t(SKILL_KEY[skill])}</span>
-                  <span className="text-sm font-bold text-primary">{count}</span>
-                </li>
-              ))}
+        due.length > 0 ? (
+          <ul className="space-y-2.5">
+            {due.slice(0, 3).map((unit) => (
+              <li key={unit.key}>
+                <ReviewUnitCard unit={unit} now={now} />
+              </li>
+            ))}
           </ul>
         ) : (
           <p className="card-surface p-5 text-sm text-muted-foreground">{t("home.dueNone")}</p>
@@ -136,8 +142,7 @@ function Home() {
             <div className="min-w-0">
               <p className="truncate text-base font-bold">{recent.name}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("sets.wordCount", { count: recent.wordCount })} ·{" "}
-                {t("sets.dueCount", { count: recent.dueCount })}
+                {t("sets.wordCount", { count: recent.wordCount })}
               </p>
             </div>
             <StatePill state={recent.status} />

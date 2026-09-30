@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 /**
  * AI content generation. Every word the learner enters is turned into a
  * translation, a pronunciation guide and several natural sentences in the
@@ -75,6 +77,7 @@ Rules:
 Return JSON only, no prose, no markdown fences.`;
 
 export const generateSetContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];

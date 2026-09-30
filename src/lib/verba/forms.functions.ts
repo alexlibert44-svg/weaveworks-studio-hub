@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 /**
  * User-initiated Tenses & Forms generation. Runs only when the learner
  * presses "Create tenses & forms". Words without genuine inflected forms are
@@ -53,6 +55,7 @@ Order forms in a meaningful educational order (e.g. for English verbs: 3rd perso
 Return JSON only.`;
 
 export const generateForms = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];

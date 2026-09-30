@@ -20,6 +20,9 @@ import {
   wordStatus,
 } from "@/lib/verba/progress";
 import { cn } from "@/lib/utils";
+import { unitState } from "@/lib/verba/reviews";
+import { countdown } from "@/lib/verba/schedule";
+import { useReviewUnits } from "@/lib/verba/use-review-units";
 
 export const Route = createFileRoute("/sets/$setId/")({
   validateSearch: (search: Record<string, unknown>): { tab?: "words" | "forms" } =>
@@ -54,6 +57,27 @@ function SetDetail() {
     void navigate({ to: "/sets/$setId", params: { setId }, search: next === "forms" ? { tab: "forms" } : {}, replace: true });
 
   const { data } = useQuery({ queryKey: ["set", setId], queryFn: () => getSet(setId) });
+  const { units, now } = useReviewUnits(deviceId);
+  const { locale } = useI18n();
+  const scheduleLine = (kind: "words" | "forms") => {
+    const unit = units?.find((u) => u.setId === setId && u.kind === kind);
+    if (!unit) return null;
+    const state = unitState(unit, now);
+    const label =
+      state === "upcoming" && unit.nextReviewAt
+        ? `${t("review.nextIn")} ${countdown(unit.nextReviewAt, locale, now)}`
+        : t(`review.state.${state}` as never);
+    return (
+      <p
+        className={cn(
+          "mt-2 text-center text-xs",
+          state === "overdue" ? "font-semibold text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {label}
+      </p>
+    );
+  };
 
   const remove = useMutation({
     mutationFn: () => deleteSet(setId),
@@ -144,10 +168,11 @@ function SetDetail() {
       {tab === "words" ? (
         <>
           <Button asChild size="lg" className="mt-4 w-full rounded-2xl">
-            <Link to="/practice" search={{ set: setId, scope: "words" }}>
-              <Play className="size-4" /> {t("set.trainWords")}
+            <Link to="/practice" search={{ set: setId, review: "words" }}>
+              <Play className="size-4" /> {t("review.reviewWords")}
             </Link>
           </Button>
+          {scheduleLine("words")}
           <ul className="mt-5 space-y-2.5">
             {words.map((word) => {
               const progress = unitProgress(wordSkillItems(items, word.id), UNIT_SKILLS);
@@ -220,10 +245,11 @@ function SetDetail() {
       ) : (
         <>
           <Button asChild size="lg" className="mt-4 w-full rounded-2xl">
-            <Link to="/practice" search={{ set: setId, scope: "forms" }}>
-              <Play className="size-4" /> {t("set.trainForms")}
+            <Link to="/practice" search={{ set: setId, review: "forms" }}>
+              <Play className="size-4" /> {t("review.reviewForms")}
             </Link>
           </Button>
+          {scheduleLine("forms")}
           <ul className="mt-5 space-y-3">
             {wordsWithForms.map((word) => (
               <li key={word.id} className="card-surface p-4">

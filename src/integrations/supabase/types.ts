@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.18"
   }
   public: {
     Tables: {
@@ -25,7 +25,7 @@ export type Database = {
         }
         Insert: {
           day?: string
-          device_id: string
+          device_id?: string
           goal_minutes?: number
           id?: string
           items_completed?: number
@@ -59,7 +59,7 @@ export type Database = {
           audio_autoplay?: boolean
           created_at?: string
           daily_goal_minutes?: number
-          device_id: string
+          device_id?: string
           display_name?: string
           learning_language?: string
           longest_streak?: number
@@ -108,7 +108,7 @@ export type Database = {
         Insert: {
           attempts?: number
           created_at?: string
-          device_id: string
+          device_id?: string
           difficulty?: number
           ease?: number
           form?: string
@@ -191,7 +191,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          device_id: string
+          device_id?: string
           id?: string
           is_correct: boolean
           learning_item_id: string
@@ -219,6 +219,30 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pronunciation_attempts: {
         Row: {
           attempt_index: number
@@ -235,7 +259,7 @@ export type Database = {
         Insert: {
           attempt_index?: number
           created_at?: string
-          device_id: string
+          device_id?: string
           id?: string
           learning_item_id: string
           matched_words?: string[]
@@ -262,6 +286,62 @@ export type Database = {
             columns: ["learning_item_id"]
             isOneToOne: false
             referencedRelation: "learning_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_sessions: {
+        Row: {
+          completed_at: string | null
+          device_id: string
+          id: string
+          kind: string
+          phase: string
+          position: number
+          purpose: string
+          scheduled_for: string | null
+          set_id: string
+          started_at: string
+          state: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          device_id?: string
+          id?: string
+          kind: string
+          phase?: string
+          position?: number
+          purpose: string
+          scheduled_for?: string | null
+          set_id: string
+          started_at?: string
+          state?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          device_id?: string
+          id?: string
+          kind?: string
+          phase?: string
+          position?: number
+          purpose?: string
+          scheduled_for?: string | null
+          set_id?: string
+          started_at?: string
+          state?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_sessions_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "word_sets"
             referencedColumns: ["id"]
           },
         ]
@@ -330,7 +410,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          device_id: string
+          device_id?: string
           example?: string | null
           example_translation?: string | null
           explanation?: string | null
@@ -384,33 +464,51 @@ export type Database = {
           created_at: string
           device_id: string
           forms_generated_at: string | null
+          forms_last_reviewed_at: string | null
+          forms_next_review_at: string | null
+          forms_review_stage: number
           id: string
           is_demo: boolean
           last_practiced_at: string | null
+          last_reviewed_at: string | null
           name: string
           native_language: string
+          next_review_at: string | null
+          review_stage: number
           target_language: string
         }
         Insert: {
           created_at?: string
-          device_id: string
+          device_id?: string
           forms_generated_at?: string | null
+          forms_last_reviewed_at?: string | null
+          forms_next_review_at?: string | null
+          forms_review_stage?: number
           id?: string
           is_demo?: boolean
           last_practiced_at?: string | null
+          last_reviewed_at?: string | null
           name: string
           native_language?: string
+          next_review_at?: string | null
+          review_stage?: number
           target_language?: string
         }
         Update: {
           created_at?: string
           device_id?: string
           forms_generated_at?: string | null
+          forms_last_reviewed_at?: string | null
+          forms_next_review_at?: string | null
+          forms_review_stage?: number
           id?: string
           is_demo?: boolean
           last_practiced_at?: string | null
+          last_reviewed_at?: string | null
           name?: string
           native_language?: string
+          next_review_at?: string | null
+          review_stage?: number
           target_language?: string
         }
         Relationships: []
@@ -476,7 +574,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_review_session: { Args: { _session_id: string }; Returns: Json }
+      owns_set: { Args: { _set_id: string }; Returns: boolean }
+      owns_word: { Args: { _word_id: string }; Returns: boolean }
+      review_interval_days: { Args: { _stage: number }; Returns: number }
     }
     Enums: {
       mastery_state: "new" | "learning" | "familiar" | "strong" | "mastered"

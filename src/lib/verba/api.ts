@@ -10,7 +10,7 @@ import {
   wordStatus,
   type SkillAttempt,
 } from "./progress";
-import { isDue, priority, schedule } from "./srs";
+import { schedule } from "./srs";
 import type {
   DailyProgress,
   Exercise,
@@ -116,12 +116,10 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
   ]);
   if (error) throw error;
 
-  const now = Date.now();
   const attemptsByWord = await wordAttemptsByWord((items ?? []) as LearningItem[]);
   return (sets ?? []).map((set) => {
     const setWords = (words ?? []).filter((w) => w.set_id === set.id);
     const setItems = ((items ?? []) as LearningItem[]).filter((i) => i.set_id === set.id);
-    const dueCount = setItems.filter((i) => new Date(i.next_review_at).getTime() <= now).length;
     const status: SetSummary["status"] =
       setItems.every((i) => i.attempts === 0)
         ? "new"
@@ -129,7 +127,7 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
             setWords.every((w) => wordStatus(attemptsByWord.get(w.id) ?? []) === "mastered")
           ? "mastered"
           : "learning";
-    return { ...(set as WordSet), wordCount: setWords.length, status, dueCount };
+    return { ...(set as WordSet), wordCount: setWords.length, status };
   });
 }
 
@@ -433,14 +431,8 @@ export async function getWord(wordId: string): Promise<{
 
 /* -------------------------------- sessions --------------------------------- */
 
-/** Review status buckets, all derived from real stored performance. */
-export type ReviewStatus = "due" | "new" | "learning" | "weak" | "strong" | "mastered";
-
 export interface ReviewFilters {
   setId?: string | null;
-  status?: ReviewStatus | null;
-  /** Primary part of speech of the word, e.g. "verb". */
-  pos?: string | null;
   skill?: Skill | null;
   /** Train one original word only. */
   wordId?: string | null;
@@ -450,28 +442,9 @@ export interface ReviewFilters {
   scope?: "words" | "forms" | null;
 }
 
-export function matchesStatus(item: LearningItem, status: ReviewStatus): boolean {
-  const mastery = Number(item.mastery);
-  const errorRate = item.attempts > 0 ? item.mistakes / item.attempts : 0;
-  switch (status) {
-    case "due":
-      return isDue(item);
-    case "new":
-      return item.attempts === 0;
-    case "learning":
-      return item.attempts > 0 && mastery < 60;
-    case "weak":
-      return item.attempts > 0 && (errorRate >= 0.34 || mastery < 35);
-    case "strong":
-      return mastery >= 60 && mastery < 85;
-    case "mastered":
-      return mastery >= 85;
-  }
-}
-
 /**
- * Builds a session queue from real stored performance.
- * With no filters this is the global review queue (weakest & most overdue first).
+ * Builds an extra-practice queue (weakest first) for a set, word or form.
+ * Extra practice never touches the Word Set review schedule.
  */
 export async function buildQueue(
   deviceId: string,
@@ -493,27 +466,7 @@ export async function buildQueue(
   if (f.wordId && !f.formId) items = items.filter((i) => UNIT_SKILLS.includes(i.skill) && i.form === "base");
   if (items.length === 0) return [];
 
-  if (f.pos) {
-    const { data: posWords } = await supabase
-      .from("words")
-      .select("id")
-      .eq("part_of_speech", f.pos);
-    const allowed = new Set((posWords ?? []).map((w) => w.id));
-    items = items.filter((i) => allowed.has(i.word_id));
-  }
-
-  const explicit = Boolean(
-    f.setId || f.skill || f.pos || f.wordId || f.formId || (f.status && f.status !== "due"),
-  );
-  let pool: LearningItem[];
-  if (f.status) {
-    pool = items.filter((i) => matchesStatus(i, f.status as ReviewStatus));
-  } else {
-    const due = items.filter((i) => isDue(i));
-    pool = due.length > 0 ? due : explicit ? items : [];
-  }
-  pool = pool.slice();
-  pool.sort((a, b) => priority(b) - priority(a));
+  const pool = items.slice().sort((a, b) => Number(a.mastery) - Number(b.mastery));
   const selected = pool.slice(0, limit);
   if (selected.length === 0) return [];
 
@@ -575,100 +528,6 @@ export async function buildQueue(
   exercises.sort((a, b) => order[a.skill] - order[b.skill]);
   return exercises;
 }
-
-export interface DueBreakdown {
-  total: number;
-  bySkill: Partial<Record<Skill, number>>;
-  /** When the next item becomes due, if nothing is due right now. */
-  nextReviewAt: string | null;
-}
-
-export async function getDueBreakdown(deviceId: string): Promise<DueBreakdown> {
-  const now = new Date().toISOString();
-  const [{ data, error }, { data: upcoming }] = await Promise.all([
-    supabase
-      .from("learning_items")
-      .select("skill, next_review_at")
-      .eq("device_id", deviceId)
-      .lte("next_review_at", now),
-    supabase
-      .from("learning_items")
-      .select("next_review_at")
-      .eq("device_id", deviceId)
-      .gt("next_review_at", now)
-      .order("next_review_at", { ascending: true })
-      .limit(1),
-  ]);
-  if (error) throw error;
-
-  const bySkill: Partial<Record<Skill, number>> = {};
-  for (const row of data ?? []) {
-    const skill = row.skill as Skill;
-    bySkill[skill] = (bySkill[skill] ?? 0) + 1;
-  }
-  return {
-    total: (data ?? []).length,
-    bySkill,
-    nextReviewAt: upcoming?.[0]?.next_review_at ?? null,
-  };
-}
-
-export interface ReviewOverview extends DueBreakdown {
-  byStatus: Record<ReviewStatus, number>;
-  /** Counts keyed by the word's stored primary part of speech. */
-  byPos: Record<string, number>;
-  bySet: { id: string; name: string; due: number; total: number }[];
-}
-
-const STATUSES: ReviewStatus[] = ["due", "new", "learning", "weak", "strong", "mastered"];
-
-/** Everything the review dashboard shows, computed from stored review data. */
-export async function getReviewOverview(deviceId: string): Promise<ReviewOverview> {
-  const [{ data: rawItems, error }, { data: sets }] = await Promise.all([
-    supabase.from("learning_items").select("*").eq("device_id", deviceId),
-    supabase.from("word_sets").select("id, name").eq("device_id", deviceId),
-  ]);
-  if (error) throw error;
-
-  const items = (rawItems ?? []) as LearningItem[];
-  const wordIds = [...new Set(items.map((i) => i.word_id))];
-  const { data: words } = wordIds.length
-    ? await supabase.from("words").select("id, part_of_speech").in("id", wordIds)
-    : { data: [] as { id: string; part_of_speech: string | null }[] };
-  const posByWord = new Map((words ?? []).map((w) => [w.id, w.part_of_speech]));
-
-  const bySkill: Partial<Record<Skill, number>> = {};
-  const byPos: Record<string, number> = {};
-  const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<ReviewStatus, number>;
-  let total = 0;
-  let nextReviewAt: string | null = null;
-
-  for (const item of items) {
-    for (const status of STATUSES) if (matchesStatus(item, status)) byStatus[status] += 1;
-    if (isDue(item)) {
-      total += 1;
-      bySkill[item.skill] = (bySkill[item.skill] ?? 0) + 1;
-      const pos = posByWord.get(item.word_id);
-      if (pos) byPos[pos] = (byPos[pos] ?? 0) + 1;
-    } else if (!nextReviewAt || item.next_review_at < nextReviewAt) {
-      nextReviewAt = item.next_review_at;
-    }
-  }
-
-  const bySet = (sets ?? []).map((set) => {
-    const setItems = items.filter((i) => i.set_id === set.id);
-    return {
-      id: set.id as string,
-      name: set.name as string,
-      due: setItems.filter((i) => isDue(i)).length,
-      total: setItems.length,
-    };
-  });
-
-  return { total, bySkill, nextReviewAt, byStatus, byPos, bySet };
-}
-
-
 
 /** Persists one analysed pronunciation recording alongside the SRS attempt. */
 export async function recordPronunciation(input: {

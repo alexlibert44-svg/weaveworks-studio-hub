@@ -105,7 +105,6 @@ export interface SetSummary extends WordSet {
   wordCount: number;
   /** Real status derived from stored per-word results. */
   status: MasteryState;
-  dueCount: number;
 }
 
 export interface WordForm {

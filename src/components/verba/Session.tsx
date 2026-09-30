@@ -88,6 +88,12 @@ interface SessionProps {
   onRestart?: () => void;
   /** When set, exit/finish return here instead of the sets list. */
   onExit?: (() => void) | undefined;
+  /** Resume a saved review session at this word index. */
+  initialIndex?: number;
+  /** Called when the learner moves on to the next word (persisted for resumption). */
+  onProgress?: (index: number) => void;
+  /** When set, the last word hands control back instead of showing the done screen. */
+  onComplete?: () => void;
 }
 
 export function Session({
@@ -98,13 +104,16 @@ export function Session({
   onFinished,
   onRestart,
   onExit,
+  initialIndex = 0,
+  onProgress,
+  onComplete,
 }: SessionProps) {
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
   const { t } = useI18n();
   const units = useMemo(() => buildUnits(exercises), [exercises]);
   const [attempt, setAttempt] = useState(0);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => Math.min(initialIndex, Math.max(exercises.length - 1, 0)));
   const [step, setStep] = useState<Step>("recognition");
   const [done, setDone] = useState(false);
   const [stats, setStats] = useState({
@@ -131,9 +140,10 @@ export function Session({
   const finish = useCallback(() => {
     const minutes = Math.max(0.5, Math.round(((Date.now() - startedAt.current) / 60000) * 10) / 10);
     void logSession(deviceId, minutes, total).catch(() => undefined);
-    setDone(true);
     onFinished();
-  }, [deviceId, onFinished, total]);
+    if (onComplete) onComplete();
+    else setDone(true);
+  }, [deviceId, onFinished, onComplete, total]);
 
   const next = () => {
     const position = STEPS.indexOf(step);
@@ -143,6 +153,7 @@ export function Session({
     }
     if (index + 1 >= total) finish();
     else {
+      onProgress?.(index + 1);
       setIndex((value) => value + 1);
       setStep("recognition");
     }
