@@ -83,7 +83,7 @@ function AddPage() {
   if (create.isPending) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <span className="bg-hero-gradient flex size-20 items-center justify-center rounded-3xl text-primary-foreground shadow-glow">
+        <span className="flex size-20 items-center justify-center rounded-lg bg-primary-soft text-primary shadow-card">
           <Sparkles className="size-9" />
         </span>
         <h1 className="mt-6 text-xl font-bold">{t("add.generating")}</h1>

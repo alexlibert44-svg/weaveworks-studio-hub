@@ -163,7 +163,7 @@ export function Session({
     const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <span className="bg-hero-gradient flex size-20 items-center justify-center rounded-3xl text-primary-foreground shadow-glow">
+        <span className="flex size-20 items-center justify-center rounded-lg bg-primary-soft text-primary shadow-card">
           <PartyPopper className="size-9" />
         </span>
         <h1 className="mt-6 text-2xl font-bold">{t("practice.done")}</h1>
@@ -771,7 +771,7 @@ function WriteStep({
       />
 
       {retry ? (
-        <div className="mt-4 rounded-2xl bg-accent/15 px-4 py-3 text-sm font-semibold" role="status">
+        <div className="mt-4 rounded-lg bg-accent-soft px-4 py-3 text-sm font-semibold text-secondary-foreground" role="status">
           <p>{t("train.tryAgain")}</p>
           {feedback.missing.length > 0 ? (
             <p className="mt-1 text-xs">
