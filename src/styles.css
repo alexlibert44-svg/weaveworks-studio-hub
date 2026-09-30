@@ -154,10 +154,10 @@
   --border: #3F4A60;
   --input: #4B566B;
   --ring: #A8A2FF;
-  --hero-foreground: #F8FAFC;
+  --hero-foreground: #2D2A4A;
   --hero-circle-blue: #A8D8F0;
   --hero-circle-purple: #EAE8FF;
-  --gradient-hero: linear-gradient(125deg, #426587 0%, #514E83 58%, #604F90 100%);
+  --gradient-hero: linear-gradient(125deg, #83C9FF 0%, #A8D8FF 28%, #C7B5FF 69%, #DDD2FF 100%);
   --gradient-accent: #A8A2FF;
   --gradient-surface: #222C40;
 }
