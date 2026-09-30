@@ -183,10 +183,26 @@ export async function saveSessionProgress(
   if (error) throw error;
 }
 
-/** Completes the session; the database advances the schedule exactly once. */
-export async function completeReviewSession(sessionId: string): Promise<void> {
-  const { error } = await supabase.rpc("complete_review_session", { _session_id: sessionId });
+/** Outcome computed by the database from the session's real answers. */
+export interface ReviewOutcome {
+  advanced: boolean;
+  already?: boolean;
+  recall?: "strong" | "moderate" | "poor";
+  accuracy?: number;
+  timing?: "initial" | "on_time" | "late" | "long_delay";
+  stage?: number;
+  stage_before?: number;
+  interval_days?: number | null;
+  next_review_at?: string | null;
+  correct?: number;
+  incorrect?: number;
+}
+
+/** Completes the session; the database grades recall and writes the schedule exactly once. */
+export async function completeReviewSession(sessionId: string): Promise<ReviewOutcome> {
+  const { data, error } = await supabase.rpc("complete_review_session", { _session_id: sessionId });
   if (error) throw error;
+  return (data ?? { advanced: false }) as unknown as ReviewOutcome;
 }
 
 /**

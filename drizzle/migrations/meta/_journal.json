@@ -15,6 +15,13 @@
       "when": 1790770382526,
       "tag": "0001_sentence_word_glosses",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790794863296,
+      "tag": "0002_adaptive_review_scheduling",
+      "breakpoints": true
     }
   ]
 }

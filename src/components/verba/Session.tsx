@@ -29,6 +29,13 @@ import { SpeakButton } from "@/components/verba/SpeakButton";
 import { TappableSentence } from "@/components/verba/TappableSentence";
 import { normalize, similarity } from "@/lib/verba/srs";
 import type { Exercise, LearningItem, Sentence, Skill, Word } from "@/lib/verba/types";
+import { useServerFn } from "@tanstack/react-start";
+import { Loader2 as MeaningSpinner } from "lucide-react";
+import { useLearner } from "@/components/verba/AppGate";
+import { getMeaningQuestion, type MeaningQuestion } from "@/lib/verba/meaning.functions";
+
+/** Distractors already shown per word this visit, so repeats are avoided. */
+const usedDistractors = new Map<string, string[]>();
 
 /** Builds a cloze prompt by hiding the target word inside its sentence. */
 export function cloze(sentence: string, word: string) {
@@ -834,23 +841,61 @@ function MeaningStep({
   onDone: (correct: boolean, response: string) => void;
 }) {
   const { t } = useI18n();
+  const { learner } = useLearner();
+  const fetchQuestion = useServerFn(getMeaningQuestion);
   const correct = unit.word.translation ?? unit.word.meaning ?? "";
   const [picked, setPicked] = useState<string | null>(null);
+  const [question, setQuestion] = useState<MeaningQuestion | null>(null);
+  const [options, setOptions] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadKey, setLoadKey] = useState(0);
+  void units;
 
-  const options = useMemo(() => {
-    const distractors = units
-      .filter((other) => other.word.id !== unit.word.id)
-      .map((other) => other.word.translation ?? other.word.meaning ?? "")
-      .filter((value) => value && value !== correct);
-    const unique = [...new Set(distractors)].slice(0, 3);
-    const all = [correct, ...unique];
-    // Stable shuffle per word so re-renders keep the same order.
-    const seed = unit.word.id.charCodeAt(0) + unit.word.id.length;
-    return all
-      .map((value, i) => ({ value, key: (i * 7 + seed) % all.length }))
-      .sort((a, b) => a.key - b.key)
-      .map((entry) => entry.value);
-  }, [correct, unit.word.id, units]);
+  useEffect(() => {
+    if (!correct) return;
+    let cancelled = false;
+    setQuestion(null);
+    setLoadError(null);
+    const targetLanguage =
+      new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] ?? locale) ?? locale;
+    fetchQuestion({
+      data: {
+        word: unit.word.text,
+        correct,
+        partOfSpeech: unit.word.part_of_speech ?? null,
+        context: unit.sentence?.text ?? null,
+        targetLanguage,
+        nativeLanguage: learner.native_language,
+        avoid: usedDistractors.get(unit.word.id) ?? [],
+      },
+    })
+      .then((q) => {
+        if (cancelled) return;
+        usedDistractors.set(unit.word.id, [
+          ...(usedDistractors.get(unit.word.id) ?? []),
+          ...q.distractors.map((d) => d.text),
+        ].slice(-20));
+        // Real random position for the correct answer, fixed for this question.
+        const all = [correct, ...q.distractors.map((d) => d.text)];
+        for (let i = all.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [all[i], all[j]] = [all[j] as string, all[i] as string];
+        }
+        setOptions(all);
+        setQuestion(q);
+      })
+      .catch(async (e: unknown) => {
+        if (cancelled) return;
+        const needsSignIn = await handleAuthFailure(e);
+        setLoadError(needsSignIn ? t("auth.expired") : e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit.word.id, correct, loadKey]);
+
+  const pickedWhy = question?.distractors.find((d) => d.text === picked)?.why;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -859,31 +904,62 @@ function MeaningStep({
         <p className="text-3xl font-bold" lang={locale}>
           {unit.word.text}
         </p>
+        {unit.sentence?.text ? (
+          <p className="mt-3 text-sm text-muted-foreground" lang={locale}>
+            {unit.sentence.text}
+          </p>
+        ) : null}
         <SpeakButton variant="secondary" className="mt-4 w-full rounded-xl" text={unit.word.text} locale={locale} label={t("train.wordAudio")} />
       </div>
 
-      <ul className="mt-4 space-y-2.5">
-        {options.map((option) => {
-          const isCorrect = option === correct;
-          const chosen = picked === option;
-          return (
-            <li key={option}>
-              <button
-                type="button"
-                disabled={picked !== null}
-                onClick={() => setPicked(option)}
-                className={cn(
-                  "card-surface w-full p-4 text-start text-sm font-semibold transition",
-                  picked !== null && isCorrect && "bg-success-soft text-success",
-                  chosen && !isCorrect && "bg-destructive/10 text-destructive",
-                )}
-              >
-                {option}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {!question ? (
+        loadError ? (
+          <div className="mt-6 text-center" role="alert">
+            <p className="text-sm text-destructive">{loadError}</p>
+            <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => setLoadKey((k) => k + 1)}>
+              <RotateCcw className="size-4" /> {t("train.meaningRetry")}
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center gap-2 text-sm text-muted-foreground">
+            <MeaningSpinner className="size-6 animate-spin text-primary" />
+            {t("train.meaningLoading")}
+          </div>
+        )
+      ) : (
+        <ul className="mt-4 space-y-2.5">
+          {options.map((option) => {
+            const isCorrect = option === correct;
+            const chosen = picked === option;
+            return (
+              <li key={option}>
+                <button
+                  type="button"
+                  disabled={picked !== null}
+                  onClick={() => setPicked(option)}
+                  className={cn(
+                    "card-surface w-full p-4 text-start text-sm font-semibold transition",
+                    picked !== null && isCorrect && "bg-success-soft text-success",
+                    chosen && !isCorrect && "bg-destructive/10 text-destructive",
+                  )}
+                >
+                  {option}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {picked !== null && question ? (
+        <div className="card-surface mt-4 space-y-1.5 p-4 text-sm">
+          <p className={cn("font-bold", picked === correct ? "text-success" : "text-destructive")}>
+            {picked === correct ? t("train.meaningCorrect") : t("train.meaningWrong", { answer: correct })}
+          </p>
+          <p className="text-muted-foreground">{question.explanation}</p>
+          {pickedWhy ? <p className="text-muted-foreground">{pickedWhy}</p> : null}
+        </div>
+      ) : null}
 
       {picked !== null ? (
         <Button
@@ -893,11 +969,11 @@ function MeaningStep({
         >
           {t("common.next")} <ArrowRight className="size-4 rtl:rotate-180" />
         </Button>
-      ) : (
+      ) : question ? (
         <p className="mt-auto pt-6 text-center text-sm text-muted-foreground">
           {t("train.meaningHint")}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
