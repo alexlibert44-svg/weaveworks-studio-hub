@@ -292,48 +292,78 @@ export type Database = {
       }
       review_sessions: {
         Row: {
+          accuracy: number | null
           completed_at: string | null
+          correct_count: number | null
+          delay_days: number | null
           device_id: string
           id: string
+          incorrect_count: number | null
+          interval_days: number | null
           kind: string
+          next_review_at: string | null
           phase: string
           position: number
           purpose: string
+          recall: string | null
           scheduled_for: string | null
           set_id: string
+          stage_after: number | null
+          stage_before: number | null
           started_at: string
           state: Json
           status: string
+          timing: string | null
           updated_at: string
         }
         Insert: {
+          accuracy?: number | null
           completed_at?: string | null
+          correct_count?: number | null
+          delay_days?: number | null
           device_id?: string
           id?: string
+          incorrect_count?: number | null
+          interval_days?: number | null
           kind: string
+          next_review_at?: string | null
           phase?: string
           position?: number
           purpose: string
+          recall?: string | null
           scheduled_for?: string | null
           set_id: string
+          stage_after?: number | null
+          stage_before?: number | null
           started_at?: string
           state?: Json
           status?: string
+          timing?: string | null
           updated_at?: string
         }
         Update: {
+          accuracy?: number | null
           completed_at?: string | null
+          correct_count?: number | null
+          delay_days?: number | null
           device_id?: string
           id?: string
+          incorrect_count?: number | null
+          interval_days?: number | null
           kind?: string
+          next_review_at?: string | null
           phase?: string
           position?: number
           purpose?: string
+          recall?: string | null
           scheduled_for?: string | null
           set_id?: string
+          stage_after?: number | null
+          stage_before?: number | null
           started_at?: string
           state?: Json
           status?: string
+          timing?: string | null
           updated_at?: string
         }
         Relationships: [
