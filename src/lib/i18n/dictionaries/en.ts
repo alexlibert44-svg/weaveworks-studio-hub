@@ -136,6 +136,30 @@ export const en = {
   "review.next": "Next review",
 
   "profile.title": "Profile",
+
+  "settings.title": "Settings",
+
+  "settings.account": "Account",
+
+  "settings.editProfile": "Edit name and picture",
+
+  "settings.learning": "Learning",
+
+  "settings.audio": "Audio",
+
+  "settings.notifications": "Notifications",
+
+  "settings.audioHint": "Play the word automatically when a new word appears.",
+
+  "profile.edit": "Edit profile",
+
+  "profile.changePhoto": "Change picture",
+
+  "profile.photoError": "Couldn't save the picture. Try again.",
+
+  "profile.statLearning": "Being learned",
+
+  "profile.openSettings": "Settings",
   "profile.languages": "Languages",
   "profile.native": "I speak",
   "profile.target": "I'm learning",

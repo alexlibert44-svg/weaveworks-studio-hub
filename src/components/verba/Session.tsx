@@ -347,10 +347,12 @@ function RecognitionStep({
 }) {
   const { t } = useI18n();
   const { word, sentence } = unit;
+  const { learner } = useLearner();
+  const autoplay = learner.audio_autoplay;
 
   useEffect(() => {
-    speak(word.text, locale);
-  }, [word.text, locale]);
+    if (autoplay) speak(word.text, locale);
+  }, [word.text, locale, autoplay]);
 
   return (
     <div className="flex flex-1 flex-col">

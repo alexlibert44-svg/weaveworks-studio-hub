@@ -671,6 +671,7 @@ export interface ProfileStats {
   totalWords: number;
   masteredWords: number;
   overallMastery: number;
+  learningWords: number;
 }
 
 export async function getProfileStats(deviceId: string): Promise<ProfileStats> {
@@ -690,6 +691,8 @@ export async function getProfileStats(deviceId: string): Promise<ProfileStats> {
   return {
     totalWords: wordIds.length,
     masteredWords: wordIds.filter((id) => wordStatus(attemptsByWord.get(id) ?? []) === "mastered")
+      .length,
+    learningWords: wordIds.filter((id) => wordStatus(attemptsByWord.get(id) ?? []) === "learning")
       .length,
     overallMastery:
       progress.length === 0 ? 0 : Math.round(progress.reduce((a, b) => a + b, 0) / progress.length),
