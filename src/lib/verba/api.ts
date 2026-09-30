@@ -449,7 +449,6 @@ export interface ReviewFilters {
 export async function buildQueue(
   deviceId: string,
   filters: ReviewFilters | string | null = null,
-  limit = 10,
 ): Promise<Exercise[]> {
   const f: ReviewFilters = typeof filters === "string" ? { setId: filters } : (filters ?? {});
   let query = supabase.from("learning_items").select("*").eq("device_id", deviceId);
@@ -466,9 +465,8 @@ export async function buildQueue(
   if (f.wordId && !f.formId) items = items.filter((i) => UNIT_SKILLS.includes(i.skill) && i.form === "base");
   if (items.length === 0) return [];
 
-  const pool = items.slice().sort((a, b) => Number(a.mastery) - Number(b.mastery));
-  const selected = pool.slice(0, limit);
-  if (selected.length === 0) return [];
+  // Every eligible item is trained: no fixed limit, never a subset of the set.
+  const selected = items;
 
   const wordIds = [...new Set(selected.map((i) => i.word_id))];
   const formIds = [...new Set(selected.map((i) => i.form_id).filter(Boolean))] as string[];
@@ -514,7 +512,13 @@ export async function buildQueue(
     exercises.push({ item, word, sentence, skill: item.skill });
   }
 
-  // Introduce a word before drilling it.
+  // Saved order: words by their position, forms by parent word then form
+  // position. The session groups exercises per unit in this order.
+  const wordPos = new Map(((words ?? []) as Word[]).map((w) => [w.id, w.position]));
+  const unitKey = (e: Exercise) => {
+    const form = e.item.form_id ? formsById.get(e.item.form_id) : undefined;
+    return [wordPos.get(e.item.word_id) ?? 0, form ? form.position : -1] as const;
+  };
   const order: Record<Skill, number> = {
     recognition: 0,
     listening: 1,
@@ -525,7 +529,11 @@ export async function buildQueue(
     sentence_usage: 6,
     form: 7,
   };
-  exercises.sort((a, b) => order[a.skill] - order[b.skill]);
+  exercises.sort((a, b) => {
+    const [aw, af] = unitKey(a);
+    const [bw, bf] = unitKey(b);
+    return aw - bw || af - bf || order[a.skill] - order[b.skill];
+  });
   return exercises;
 }
 

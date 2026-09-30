@@ -241,7 +241,7 @@ export const ar: Dictionary = {
   "train.pronMissed": "يحتاج تدريباً",
   "train.pronFailed": "فشل تحليل النطق. حاول مرة أخرى.",
   "train.writeSentenceHint": "اكتب الجملة كاملة بلغة التعلّم.",
-  "train.tapForHint": "اضغط على أي كلمة لرؤيتها بلغة التعلّم.",
+  "train.tapForHint": "اضغط على أي كلمة لرؤية معناها.",
   "train.writeMissing": "كلمات ناقصة",
   "train.writeExtra": "كلمات زائدة",
   "word.skillWriting": "الكتابة",
@@ -316,4 +316,7 @@ export const ar: Dictionary = {
   "auth.signedInAs": "مسجّل الدخول باسم",
   "auth.signout": "تسجيل الخروج",
   "review.saveFailed": "تعذّر حفظ تقدمك. تحقق من الاتصال وحاول مرة أخرى.",
+  "audio.retry": "فشل الصوت — أعد المحاولة",
+  "train.showTranslation": "إظهار الترجمة",
+  "train.noMeaning": "لم يُعثر على معنى",
 };

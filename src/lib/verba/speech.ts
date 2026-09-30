@@ -1,17 +1,67 @@
+import { supabase } from "@/integrations/supabase/client";
+
 /**
- * Browser speech helpers. The locale is always the language being learned, so
- * audio and recognition match the learner's real target language. When the
- * browser has no recognition support the speaking exercise falls back to a
- * self-check so the flow never dead-ends.
+ * Real audio playback. Words and sentences are synthesized once by the
+ * app's speech service (natural voices, all app languages incl. Arabic),
+ * cached for the session, and played through an <audio> element. The promise
+ * rejects when synthesis or playback fails, so callers never claim success.
  */
 
+const cache = new Map<string, Promise<string>>();
+let current: HTMLAudioElement | null = null;
+
+function languageName(locale: string): string {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] ?? locale) ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
+async function synthesize(text: string, locale: string): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("signed-out");
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ text, language: languageName(locale) }),
+  });
+  if (!response.ok) throw new Error(`audio-${response.status}`);
+  const blob = await response.blob();
+  if (blob.size < 100) throw new Error("audio-empty");
+  return URL.createObjectURL(blob);
+}
+
+/** Loads (or reuses) the audio for this text. */
+export function loadSpeech(text: string, locale = "en-US"): Promise<string> {
+  const key = `${locale}|${text}`;
+  let pending = cache.get(key);
+  if (!pending) {
+    pending = synthesize(text, locale);
+    cache.set(key, pending);
+    pending.catch(() => cache.delete(key));
+  }
+  return pending;
+}
+
+/** Plays the text; resolves when playback ends, rejects on any failure. */
+export async function playSpeech(text: string, locale = "en-US"): Promise<void> {
+  if (typeof window === "undefined" || !text.trim()) return;
+  const url = await loadSpeech(text, locale);
+  current?.pause();
+  const audio = new Audio(url);
+  current = audio;
+  await new Promise<void>((resolve, reject) => {
+    audio.onended = () => resolve();
+    audio.onerror = () => reject(new Error("playback-failed"));
+    audio.play().catch(reject);
+  });
+}
+
+/** Fire-and-forget playback (e.g. autoplay on a new word). */
 export function speak(text: string, locale = "en-US") {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = locale;
-  utterance.rate = 0.92;
-  window.speechSynthesis.speak(utterance);
+  void playSpeech(text, locale).catch(() => undefined);
 }
 
 export function speechRecognitionSupported(): boolean {

@@ -7,8 +7,6 @@ import {
   PartyPopper,
   Play,
   RotateCcw,
-  Square,
-  Volume2,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +23,8 @@ import {
 } from "@/lib/verba/pronunciation.functions";
 import { posLabel } from "@/lib/verba/pos";
 import { speak } from "@/lib/verba/speech";
+import { SpeakButton } from "@/components/verba/SpeakButton";
+import { TappableSentence } from "@/components/verba/TappableSentence";
 import { normalize, similarity } from "@/lib/verba/srs";
 import type { Exercise, LearningItem, Sentence, Skill, Word } from "@/lib/verba/types";
 
@@ -317,17 +317,9 @@ function AudioButtons({
   const { t } = useI18n();
   return (
     <div className="mt-5 grid gap-2">
-      <Button variant="secondary" className="w-full rounded-xl" onClick={() => speak(word, locale)}>
-        <Volume2 className="size-4" /> {t("train.wordAudio")}
-      </Button>
+      <SpeakButton variant="secondary" className="w-full rounded-xl" text={word} locale={locale} label={t("train.wordAudio")} />
       {sentence ? (
-        <Button
-          variant="secondary"
-          className="w-full rounded-xl"
-          onClick={() => speak(sentence, locale)}
-        >
-          <Volume2 className="size-4" /> {t("train.sentenceAudio")}
-        </Button>
+        <SpeakButton variant="secondary" className="w-full rounded-xl" text={sentence} locale={locale} label={t("train.sentenceAudio")} />
       ) : null}
     </div>
   );
@@ -418,7 +410,6 @@ function SpeakStep({
   const { word, sentence } = unit;
   const target = sentence?.text ?? word.text;
   const [state, setState] = useState<RecorderState>("idle");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const [best, setBest] = useState(0);
   const [tries, setTries] = useState(0);
@@ -429,9 +420,8 @@ function SpeakStep({
   useEffect(
     () => () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
     },
-    [audioUrl],
+    [],
   );
 
   /** Sends the recording for real transcription-based scoring. */
@@ -491,10 +481,6 @@ function SpeakStep({
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop());
         const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
-        setAudioUrl((old) => {
-          if (old) URL.revokeObjectURL(old);
-          return URL.createObjectURL(blob);
-        });
         void analyse(blob);
       };
       recorderRef.current = recorder;
@@ -530,44 +516,39 @@ function SpeakStep({
       </div>
 
       <div className="mt-5 space-y-2.5">
-        {state === "recording" ? (
-          <Button size="lg" className="w-full rounded-2xl" onClick={stop}>
-            <Square className="size-4" /> {t("train.stopRecording")}
-          </Button>
-        ) : (
-          <Button
-            size="lg"
-            variant={state === "scored" ? "secondary" : "default"}
-            className="w-full rounded-2xl"
+        <div className="flex flex-col items-center gap-2 py-2">
+          <button
+            type="button"
+            onClick={() => (state === "recording" ? stop() : void start())}
             disabled={state === "analyzing"}
-            onClick={() => void start()}
+            aria-pressed={state === "recording"}
+            aria-label={state === "recording" ? t("train.stopRecording") : t("train.record")}
+            className={cn(
+              "relative flex size-20 items-center justify-center rounded-full shadow-card transition focus-visible:ring-4 focus-visible:ring-ring/40 focus-visible:outline-none disabled:opacity-60",
+              state === "recording"
+                ? "bg-primary-deep text-primary-foreground"
+                : "bg-primary text-primary-foreground hover:bg-primary-deep",
+            )}
           >
+            {state === "recording" ? (
+              <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-accent opacity-40" />
+            ) : null}
             {state === "analyzing" ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="relative size-8 animate-spin" />
             ) : (
-              <Mic className="size-4" />
-            )}{" "}
-            {state === "analyzing"
-              ? t("train.analyzing")
-              : tries > 0
-                ? t("train.recordAgain")
-                : t("train.record")}
-          </Button>
-        )}
-
-        {state === "recording" ? (
-          <p className="text-center text-sm font-semibold text-primary">
-            {t("practice.speakingListening")}
+              <Mic className="relative size-8" />
+            )}
+          </button>
+          <p className="text-center text-sm font-semibold text-primary" aria-live="polite">
+            {state === "recording"
+              ? t("practice.speakingListening")
+              : state === "analyzing"
+                ? t("train.analyzing")
+                : tries > 0
+                  ? t("train.recordAgain")
+                  : t("train.record")}
           </p>
-        ) : null}
-
-        {audioUrl ? (
-          <div className="card-surface p-4">
-            <p className="text-sm font-semibold">{t("train.playback")}</p>
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-            <audio className="mt-2 w-full" controls src={audioUrl} />
-          </div>
-        ) : null}
+        </div>
 
         {result ? (
           <div
@@ -671,12 +652,11 @@ function WriteStep({
   const answer = blanked ? word.text : (sentence?.text ?? word.text);
   const task = blanked ?? sentence?.text ?? null;
   const support = sentence?.translation ?? word.translation ?? word.meaning ?? "";
-  const hints = (sentence?.word_hints ?? []).filter((h) => h?.native && h?.target);
   const [value, setValue] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [retry, setRetry] = useState(false);
   const [tries, setTries] = useState(0);
-  const [openHint, setOpenHint] = useState<number | null>(null);
+  const [showSupport, setShowSupport] = useState(false);
   const [feedback, setFeedback] = useState<{ missing: string[]; extra: string[] }>({
     missing: [],
     extra: [],
@@ -721,48 +701,26 @@ function WriteStep({
       </p>
 
       <div className="card-surface animate-rise mt-4 p-6">
-        {/* The writing task, always in the target language. */}
-        <p className="text-lg leading-relaxed font-semibold" lang={locale} dir="auto">
-          {task ?? (word.translation ?? word.meaning ?? word.text)}
-        </p>
+        {/* The writing task, always in the target language; tap a word for its meaning. */}
+        {task && sentence ? (
+          <TappableSentence text={task} sentence={sentence} locale={locale} />
+        ) : (
+          <p className="text-lg leading-relaxed font-semibold" lang={locale} dir="auto">
+            {task ?? (word.translation ?? word.meaning ?? word.text)}
+          </p>
+        )}
 
-        {/* Native-language support layer: tappable words, hint shown below. */}
-        {support ? (
-          <div className="mt-4 border-t border-border pt-4">
-            {hints.length > 0 ? (
-              <>
-                <div className="flex flex-wrap gap-1.5 text-base leading-relaxed font-medium" dir="auto">
-                  {hints.map((hint, index) => (
-                    <button
-                      key={`${hint.native}-${index}`}
-                      type="button"
-                      onClick={() => setOpenHint((current) => (current === index ? null : index))}
-                      className={cn(
-                        "rounded-xl px-1.5 py-0.5 transition",
-                        openHint === index
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-primary-soft",
-                      )}
-                    >
-                      {hint.native}
-                    </button>
-                  ))}
-                </div>
-                {openHint !== null && hints[openHint] ? (
-                  <p
-                    className="mt-3 inline-flex rounded-xl bg-primary-soft px-3 py-1.5 text-sm font-bold text-primary"
-                    lang={locale}
-                    role="status"
-                  >
-                    {hints[openHint]!.target}
-                  </p>
-                ) : null}
-                <p className="mt-2 text-xs text-muted-foreground">{t("train.tapForHint")}</p>
-              </>
-            ) : (
+        {/* Full translation stays hidden until the learner asks for it. */}
+        {support && task ? (
+          <div className="mt-4 border-t border-border pt-3">
+            {showSupport ? (
               <p className="text-base leading-relaxed font-medium text-muted-foreground" dir="auto">
                 {support}
               </p>
+            ) : (
+              <Button variant="ghost" size="sm" className="rounded-xl px-2" onClick={() => setShowSupport(true)}>
+                {t("train.showTranslation")}
+              </Button>
             )}
           </div>
         ) : null}
@@ -877,13 +835,7 @@ function MeaningStep({
         <p className="text-3xl font-bold" lang={locale}>
           {unit.word.text}
         </p>
-        <Button
-          variant="secondary"
-          className="mt-4 w-full rounded-xl"
-          onClick={() => speak(unit.word.text, locale)}
-        >
-          <Volume2 className="size-4" /> {t("train.wordAudio")}
-        </Button>
+        <SpeakButton variant="secondary" className="mt-4 w-full rounded-xl" text={unit.word.text} locale={locale} label={t("train.wordAudio")} />
       </div>
 
       <ul className="mt-4 space-y-2.5">

@@ -355,6 +355,7 @@ export type Database = {
           text: string
           translation: string | null
           variation_index: number
+          word_glosses: Json | null
           word_hints: Json
           word_id: string
         }
@@ -366,6 +367,7 @@ export type Database = {
           text: string
           translation?: string | null
           variation_index?: number
+          word_glosses?: Json | null
           word_hints?: Json
           word_id: string
         }
@@ -377,6 +379,7 @@ export type Database = {
           text?: string
           translation?: string | null
           variation_index?: number
+          word_glosses?: Json | null
           word_hints?: Json
           word_id?: string
         }

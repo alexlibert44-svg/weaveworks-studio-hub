@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Check, Play, Volume2, X } from "lucide-react";
+import { ArrowLeft, Check, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ import {
   wordSkillItems,
   wordStatus,
 } from "@/lib/verba/progress";
-import { speak } from "@/lib/verba/speech";
+import { SpeakButton } from "@/components/verba/SpeakButton";
 import type { MessageKey } from "@/lib/i18n";
 import type { Skill } from "@/lib/verba/types";
 
@@ -68,7 +68,6 @@ function WordDetail() {
   const skillItems = wordSkillItems(items, word.id);
   const mastery = unitProgress(skillItems, UNIT_SKILLS);
   const status = wordStatus(attempts);
-  const history = attempts.slice(0, 12);
 
   return (
     <AppShell>
@@ -95,13 +94,7 @@ function WordDetail() {
               : ""}
           </p>
         ) : null}
-        <Button
-          variant="secondary"
-          className="mt-4 rounded-xl"
-          onClick={() => speak(word.text, locale)}
-        >
-          <Volume2 className="size-4" /> {t("common.listen")}
-        </Button>
+        <SpeakButton variant="secondary" className="mt-4 rounded-xl" text={word.text} locale={locale} label={t("common.listen")} />
       </div>
 
       <div className="card-surface mt-3 p-5">
@@ -170,38 +163,11 @@ function WordDetail() {
             {example.text}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{example.translation}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 rounded-xl px-2"
-            onClick={() => speak(example.text, locale)}
-          >
-            <Volume2 className="size-4" /> {t("common.listen")}
-          </Button>
+          <SpeakButton variant="ghost" size="sm" className="mt-2 rounded-xl px-2" text={example.text} locale={locale} label={t("common.listen")} />
         </div>
       ) : null}
 
 
-      <h2 className="mt-7 mb-3 text-lg font-bold">{t("word.history")}</h2>
-      {history.length === 0 ? (
-        <p className="card-surface p-4 text-sm text-muted-foreground">{t("word.historyEmpty")}</p>
-      ) : (
-        <ul className="card-surface divide-y divide-border px-4">
-          {history.map((a, index) => (
-            <li key={`${a.created_at}-${index}`} className="flex items-center gap-3 py-2.5 text-sm">
-              {a.is_correct ? (
-                <Check className="size-4 shrink-0 text-success" aria-label={t("word.correct")} />
-              ) : (
-                <X className="size-4 shrink-0 text-destructive" aria-label={t("word.incorrect")} />
-              )}
-              <span className="flex-1 font-semibold">{t(SKILL_LABEL[a.skill] as MessageKey)}</span>
-              <span className="text-xs text-muted-foreground" dir="ltr">
-                {new Date(a.created_at).toLocaleDateString()}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
     </AppShell>
   );
 }
