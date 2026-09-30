@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Original-word mastery is derived from `practice_attempts` history (5+ correct, latest 5 correct, across 3+ sessions per skill); session ids are tagged into `response` as `[s:<id>]` because the external database schema can't be migrated from here.
+- Keep LingoFlow's visual palette in semantic `src/styles.css` tokens (purple, light blue, white, neutral, error red); shared components inherit these tokens so no success or warning state reintroduces green or yellow.
