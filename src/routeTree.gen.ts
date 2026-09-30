@@ -15,7 +15,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as SetsIndexRouteImport } from './routes/sets.index'
-import { Route as SetsSetIdRouteImport } from './routes/sets.$setId'
+import { Route as SetsSetIdIndexRouteImport } from './routes/sets.$setId.index'
 import { Route as SetsSetIdFormsFormIdRouteImport } from './routes/sets.$setId.forms.$formId'
 import { Route as SetsSetIdWordsWordIdRouteImport } from './routes/sets.$setId.words.$wordId'
 
@@ -49,20 +49,20 @@ const SetsIndexRoute = SetsIndexRouteImport.update({
   path: '/sets/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SetsSetIdRoute = SetsSetIdRouteImport.update({
-  id: '/sets/$setId',
-  path: '/sets/$setId',
+const SetsSetIdIndexRoute = SetsSetIdIndexRouteImport.update({
+  id: '/sets/$setId/',
+  path: '/sets/$setId/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetsSetIdFormsFormIdRoute = SetsSetIdFormsFormIdRouteImport.update({
-  id: '/forms/$formId',
-  path: '/forms/$formId',
-  getParentRoute: () => SetsSetIdRoute,
+  id: '/sets/$setId/forms/$formId',
+  path: '/sets/$setId/forms/$formId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SetsSetIdWordsWordIdRoute = SetsSetIdWordsWordIdRouteImport.update({
-  id: '/words/$wordId',
-  path: '/words/$wordId',
-  getParentRoute: () => SetsSetIdRoute,
+  id: '/sets/$setId/words/$wordId',
+  path: '/sets/$setId/words/$wordId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -71,8 +71,8 @@ export interface FileRoutesByFullPath {
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
-  '/sets/$setId': typeof SetsSetIdRouteWithChildren
   '/sets/': typeof SetsIndexRoute
+  '/sets/$setId/': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
   '/sets/$setId/words/$wordId': typeof SetsSetIdWordsWordIdRoute
 }
@@ -82,8 +82,8 @@ export interface FileRoutesByTo {
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
-  '/sets/$setId': typeof SetsSetIdRouteWithChildren
   '/sets': typeof SetsIndexRoute
+  '/sets/$setId': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
   '/sets/$setId/words/$wordId': typeof SetsSetIdWordsWordIdRoute
 }
@@ -94,8 +94,8 @@ export interface FileRoutesById {
   '/practice': typeof PracticeRoute
   '/profile': typeof ProfileRoute
   '/review': typeof ReviewRoute
-  '/sets/$setId': typeof SetsSetIdRouteWithChildren
   '/sets/': typeof SetsIndexRoute
+  '/sets/$setId/': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
   '/sets/$setId/words/$wordId': typeof SetsSetIdWordsWordIdRoute
 }
@@ -107,8 +107,8 @@ export interface FileRouteTypes {
     | '/practice'
     | '/profile'
     | '/review'
-    | '/sets/$setId'
     | '/sets/'
+    | '/sets/$setId/'
     | '/sets/$setId/forms/$formId'
     | '/sets/$setId/words/$wordId'
   fileRoutesByTo: FileRoutesByTo
@@ -118,8 +118,8 @@ export interface FileRouteTypes {
     | '/practice'
     | '/profile'
     | '/review'
-    | '/sets/$setId'
     | '/sets'
+    | '/sets/$setId'
     | '/sets/$setId/forms/$formId'
     | '/sets/$setId/words/$wordId'
   id:
@@ -129,8 +129,8 @@ export interface FileRouteTypes {
     | '/practice'
     | '/profile'
     | '/review'
-    | '/sets/$setId'
     | '/sets/'
+    | '/sets/$setId/'
     | '/sets/$setId/forms/$formId'
     | '/sets/$setId/words/$wordId'
   fileRoutesById: FileRoutesById
@@ -141,8 +141,10 @@ export interface RootRouteChildren {
   PracticeRoute: typeof PracticeRoute
   ProfileRoute: typeof ProfileRoute
   ReviewRoute: typeof ReviewRoute
-  SetsSetIdRoute: typeof SetsSetIdRouteWithChildren
   SetsIndexRoute: typeof SetsIndexRoute
+  SetsSetIdIndexRoute: typeof SetsSetIdIndexRoute
+  SetsSetIdFormsFormIdRoute: typeof SetsSetIdFormsFormIdRoute
+  SetsSetIdWordsWordIdRoute: typeof SetsSetIdWordsWordIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,43 +191,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sets/$setId': {
-      id: '/sets/$setId'
+    '/sets/$setId/': {
+      id: '/sets/$setId/'
       path: '/sets/$setId'
-      fullPath: '/sets/$setId'
-      preLoaderRoute: typeof SetsSetIdRouteImport
+      fullPath: '/sets/$setId/'
+      preLoaderRoute: typeof SetsSetIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sets/$setId/forms/$formId': {
       id: '/sets/$setId/forms/$formId'
-      path: '/forms/$formId'
+      path: '/sets/$setId/forms/$formId'
       fullPath: '/sets/$setId/forms/$formId'
       preLoaderRoute: typeof SetsSetIdFormsFormIdRouteImport
-      parentRoute: typeof SetsSetIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/sets/$setId/words/$wordId': {
       id: '/sets/$setId/words/$wordId'
-      path: '/words/$wordId'
+      path: '/sets/$setId/words/$wordId'
       fullPath: '/sets/$setId/words/$wordId'
       preLoaderRoute: typeof SetsSetIdWordsWordIdRouteImport
-      parentRoute: typeof SetsSetIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface SetsSetIdRouteChildren {
-  SetsSetIdFormsFormIdRoute: typeof SetsSetIdFormsFormIdRoute
-  SetsSetIdWordsWordIdRoute: typeof SetsSetIdWordsWordIdRoute
-}
-
-const SetsSetIdRouteChildren: SetsSetIdRouteChildren = {
-  SetsSetIdFormsFormIdRoute: SetsSetIdFormsFormIdRoute,
-  SetsSetIdWordsWordIdRoute: SetsSetIdWordsWordIdRoute,
-}
-
-const SetsSetIdRouteWithChildren = SetsSetIdRoute._addFileChildren(
-  SetsSetIdRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -233,8 +221,10 @@ const rootRouteChildren: RootRouteChildren = {
   PracticeRoute: PracticeRoute,
   ProfileRoute: ProfileRoute,
   ReviewRoute: ReviewRoute,
-  SetsSetIdRoute: SetsSetIdRouteWithChildren,
   SetsIndexRoute: SetsIndexRoute,
+  SetsSetIdIndexRoute: SetsSetIdIndexRoute,
+  SetsSetIdFormsFormIdRoute: SetsSetIdFormsFormIdRoute,
+  SetsSetIdWordsWordIdRoute: SetsSetIdWordsWordIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

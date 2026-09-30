@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Loader2, Play, Sparkles, Trash2 } from "lucide-react";
-import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,10 +17,13 @@ import {
   formSkillItems,
   unitProgress,
   wordSkillItems,
+  wordStatus,
 } from "@/lib/verba/progress";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/sets/$setId")({
+export const Route = createFileRoute("/sets/$setId/")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "words" | "forms" } =>
+    search["tab"] === "forms" ? { tab: "forms" } : {},
   head: () => ({
     meta: [
       { title: "Word Set — LingoFlow" },
@@ -45,7 +47,9 @@ function SetDetail() {
   const { deviceId } = useLearner();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"words" | "forms">("words");
+  const { tab = "words" } = Route.useSearch();
+  const setTab = (next: "words" | "forms") =>
+    void navigate({ to: "/sets/$setId", params: { setId }, search: next === "forms" ? { tab: "forms" } : {}, replace: true });
 
   const { data } = useQuery({ queryKey: ["set", setId], queryFn: () => getSet(setId) });
 
@@ -76,11 +80,11 @@ function SetDetail() {
     );
   }
 
-  const { set, words, items, forms, formsGenerated } = data;
+  const { set, words, items, forms, formsGenerated, attemptsByWord } = data;
+  const wordStatuses = new Map(words.map((w) => [w.id, wordStatus(attemptsByWord.get(w.id) ?? [])]));
   const status = items.every((i) => i.attempts === 0)
     ? "new"
-    : words.length > 0 &&
-        words.every((w) => unitProgress(wordSkillItems(items, w.id), UNIT_SKILLS) >= 85)
+    : words.length > 0 && words.every((w) => wordStatuses.get(w.id) === "mastered")
       ? "mastered"
       : "learning";
   const wordsWithForms = words.filter((w) => forms.some((f) => f.word_id === w.id));
@@ -153,18 +157,32 @@ function SetDetail() {
                     className="card-surface flex items-center gap-3 p-4"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold" lang={set.target_language}>
-                        {word.text}
-                      </p>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-bold" lang={set.target_language}>
+                          {word.text}
+                        </p>
+                        {word.part_of_speech ? (
+                          <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[0.65rem] font-semibold text-primary-deep">
+                            {posLabel(t as never, word.part_of_speech)}
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="truncate text-xs text-muted-foreground">
                         {word.translation ?? word.meaning}
                       </p>
                       <div className="mt-2 flex items-center gap-2">
                         <MasteryBar value={progress} className="h-1.5" />
                         <span className="text-xs font-bold text-primary">{progress}%</span>
+                        <StatePill
+                          state={wordStatuses.get(word.id) ?? "new"}
+                          className="shrink-0 px-2 py-0.5 text-[0.6rem]"
+                        />
                       </div>
                     </div>
-                    <ChevronRight className="size-4 text-muted-foreground rtl:rotate-180" />
+                    <ChevronRight
+                      aria-hidden
+                      className="size-5 shrink-0 text-muted-foreground rtl:rotate-180"
+                    />
                   </Link>
                 </li>
               );

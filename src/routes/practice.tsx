@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ function PracticePage() {
   const { deviceId } = useLearner();
   const { t, targetSpeech } = useI18n();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const filters = {
     setId: setId ?? null,
@@ -136,6 +137,15 @@ function PracticePage() {
         if (word) void queryClient.invalidateQueries({ queryKey: ["word", word] });
         if (form) void queryClient.invalidateQueries({ queryKey: ["form", form] });
       }}
+      onExit={
+        word && setId
+          ? () => {
+              void queryClient.invalidateQueries({ queryKey: ["word", word] });
+              void queryClient.invalidateQueries({ queryKey: ["set", setId] });
+              void navigate({ to: "/sets/$setId/words/$wordId", params: { setId, wordId: word } });
+            }
+          : undefined
+      }
       onRestart={() => {
         void refetch();
       }}
