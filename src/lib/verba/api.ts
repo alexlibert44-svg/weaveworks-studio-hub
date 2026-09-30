@@ -463,19 +463,6 @@ export async function buildQueue(
   targetLanguage?: string,
 ): Promise<Exercise[]> {
   const f: ReviewFilters = typeof filters === "string" ? { setId: filters } : (filters ?? {});
-  if (targetLanguage) {
-    const { data: activeSets, error: setsError } = await supabase.from("word_sets").select("id").eq("device_id", deviceId).eq("target_language", targetLanguage);
-    if (setsError) throw setsError;
-    const allowed = (activeSets ?? []).map((set) => set.id);
-    if (f.setId && !allowed.includes(f.setId)) return [];
-    if (allowed.length === 0) return [];
-    // Scope even word/form-only practice to the active language.
-    if (!f.setId) {
-      const { data: scopedItems, error: scopedError } = await supabase.from("learning_items").select("set_id").eq("device_id", deviceId).in("set_id", allowed);
-      if (scopedError) throw scopedError;
-      if (!scopedItems?.length) return [];
-    }
-  }
   let query = supabase.from("learning_items").select("*").eq("device_id", deviceId);
   if (f.setId) query = query.eq("set_id", f.setId);
   if (f.skill) query = query.eq("skill", f.skill);

@@ -35,8 +35,8 @@ function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: stats } = useQuery({
-    queryKey: ["stats", deviceId],
-    queryFn: () => getProfileStats(deviceId),
+    queryKey: ["stats", deviceId, learner.learning_language],
+    queryFn: () => getProfileStats(deviceId, learner.learning_language),
   });
 
   const avatarPath = learner.avatar_path ?? null;

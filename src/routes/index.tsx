@@ -62,12 +62,12 @@ function Home() {
     return state === "due" || state === "overdue";
   });
   const { data: sets } = useQuery({
-    queryKey: ["sets", deviceId],
-    queryFn: () => listSets(deviceId),
+    queryKey: ["sets", deviceId, learner.learning_language],
+    queryFn: () => listSets(deviceId, learner.learning_language),
   });
   const { data: today } = useQuery({
-    queryKey: ["daily", deviceId],
-    queryFn: () => getDailyProgress(deviceId),
+    queryKey: ["daily", deviceId, learner.learning_language],
+    queryFn: () => getDailyProgress(deviceId, learner.learning_language),
   });
 
   const recent = sets?.[0];

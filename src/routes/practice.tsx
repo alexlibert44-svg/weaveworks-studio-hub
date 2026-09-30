@@ -248,6 +248,7 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
       exercises={data.exercises}
       title={setInfo.set.name}
       locale={speechLocale(setInfo.set.target_language)}
+      targetLanguage={setInfo.set.target_language}
       initialIndex={session?.phase === "units" ? session.position : 0}
       onProgress={(index) => {
         if (session) void saveSessionProgress(session.id, { position: index }).catch(() => undefined);
@@ -270,7 +271,7 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
 /** Extra practice (single word, single form, set drills): never changes the review schedule. */
 function ExtraPractice() {
   const { set: setId, skill, word, form, scope } = Route.useSearch();
-  const { deviceId } = useLearner();
+  const { deviceId, learner } = useLearner();
   const { t, targetSpeech } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -284,8 +285,8 @@ function ExtraPractice() {
   };
 
   const { data: exercises, isPending, refetch } = useQuery({
-    queryKey: ["queue", deviceId, setId ?? "", skill ?? "", word ?? "", form ?? "", scope ?? ""],
-    queryFn: () => buildQueue(deviceId, filters),
+    queryKey: ["queue", deviceId, learner.learning_language, setId ?? "", skill ?? "", word ?? "", form ?? "", scope ?? ""],
+    queryFn: () => buildQueue(deviceId, filters, learner.learning_language),
     staleTime: Infinity,
     gcTime: 0,
     enabled: Boolean(setId || word || form),
@@ -310,6 +311,7 @@ function ExtraPractice() {
       exercises={exercises}
       title={title}
       locale={locale}
+      targetLanguage={setInfo?.set.target_language ?? learner.learning_language}
       onFinished={() => {
         void queryClient.invalidateQueries({ queryKey: ["sets", deviceId] });
         void queryClient.invalidateQueries({ queryKey: ["daily", deviceId] });

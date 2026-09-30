@@ -57,7 +57,7 @@ interface SetScheduleRow {
 }
 
 /** Every reviewable unit (Original Words + Tenses & Forms per set) with its active session. */
-export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
+export async function listReviewUnits(deviceId: string, targetLanguage: string): Promise<ReviewUnit[]> {
   const [{ data: sets, error }, { data: sessions }, { data: words }, { data: forms }] =
     await Promise.all([
       supabase
@@ -66,14 +66,17 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
           "id, name, review_stage, last_reviewed_at, next_review_at, forms_review_stage, forms_last_reviewed_at, forms_next_review_at, forms_generated_at",
         )
         .eq("device_id", deviceId)
+        .eq("target_language", targetLanguage)
         .order("created_at", { ascending: false }),
       supabase.from("review_sessions").select("*").eq("device_id", deviceId).eq("status", "active"),
       supabase.from("words").select("id, set_id"),
       supabase.from("word_forms").select("id, set_id, word_id").eq("device_id", deviceId),
     ]);
   if (error) throw error;
-  const withWords = new Set((words ?? []).map((w) => w.set_id));
-  const wordIds = new Set((words ?? []).map((w) => w.id));
+  const setIds = new Set((sets ?? []).map((set) => set.id));
+  const scopedWords = (words ?? []).filter((w) => setIds.has(w.set_id));
+  const withWords = new Set(scopedWords.map((w) => w.set_id));
+  const wordIds = new Set(scopedWords.map((w) => w.id));
   const validForms = (forms ?? []).filter((f) => wordIds.has(f.word_id));
   const withForms = new Set(validForms.map((f) => f.set_id));
   const countOf = (rows: { set_id: string }[], setId: string) =>
@@ -94,7 +97,7 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
         nextReviewAt: set.next_review_at,
         lastReviewedAt: set.last_reviewed_at,
         session: sessionFor(set.id, "words"),
-        total: countOf(words ?? [], set.id),
+        total: countOf(scopedWords, set.id),
       });
     }
     if (set.forms_generated_at && withForms.has(set.id)) {
