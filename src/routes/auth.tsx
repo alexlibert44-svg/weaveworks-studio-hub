@@ -85,7 +85,13 @@ function AuthPage() {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    if (result.error) setError(result.error.message ?? String(result.error));
+    if (result.error) {
+      setError(result.error.message ?? String(result.error));
+      return;
+    }
+    if (result.redirected) return;
+    // Popup flow: the session is already set; go straight into the app.
+    void navigate({ to: "/", replace: true });
   };
 
   return (

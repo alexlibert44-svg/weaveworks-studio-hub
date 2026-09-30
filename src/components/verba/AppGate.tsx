@@ -60,6 +60,9 @@ export function AppGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     setGuestLang(browserLanguage());
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
+      // The first event can fire before a sign-in returning from Google has
+      // been read from the address bar; getSession() below waits for that.
+      if (event === "INITIAL_SESSION") return;
       setSession(next);
       if (event === "SIGNED_OUT") queryClient.clear();
       if (event === "SIGNED_IN" || event === "USER_UPDATED") void queryClient.invalidateQueries();
