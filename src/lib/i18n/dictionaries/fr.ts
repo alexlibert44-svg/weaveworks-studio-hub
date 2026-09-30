@@ -151,6 +151,7 @@ export const fr: Dictionary = {
   "settings.notifications": "Notifications",
 
   "settings.audioHint": "Lire le mot automatiquement quand un nouveau mot apparaît.",
+  "settings.saveError": "Impossible d'enregistrer les modifications. Réessayez.",
 
   "profile.edit": "Modifier le profil",
 

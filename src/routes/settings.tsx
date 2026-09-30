@@ -113,7 +113,7 @@ function SettingsPage() {
               </li>
             ))}
           </ul>
-          {save.isError ? <p role="alert" className="mt-2 text-sm text-destructive">{t("profile.photoError")}</p> : null}
+          {save.isError ? <p role="alert" className="mt-2 text-sm text-destructive">{t("settings.saveError")}</p> : null}
         </div>
       </Section>
 

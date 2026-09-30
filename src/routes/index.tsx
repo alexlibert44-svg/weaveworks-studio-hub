@@ -108,7 +108,7 @@ function Home() {
               </option>
             ))}
           </select>
-          {changeLanguage.isError ? <span role="alert" className="text-xs text-hero-foreground">{t("profile.targetChangeNote")}</span> : null}
+          {changeLanguage.isError ? <span role="alert" className="text-xs text-hero-foreground">{t("settings.saveError")}</span> : null}
         </div>
         <p className="mt-3 min-h-5 text-sm font-medium text-hero-foreground/90">{greeting ? t(greeting) : ""}</p>
         <p className="mt-1 text-sm text-hero-foreground/85">{t("home.learning", { language: target.native })}</p>

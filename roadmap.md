@@ -9,3 +9,6 @@
 - [x] Verify signed-in Home, Review, Profile, and a learning screen on desktop and mobile.
 - [x] Unify Profile identity and Review header with the shared signature frame, remove the two requested Profile statistics, and round the Home add control.
 - [x] Inspect signed-in Home, Profile, and Review on mobile and desktop after the correction.
+- [x] Restore the original signature frame and keep Profile photo/name inside it with progress below.
+- [x] Keep the Settings daily goal saved and visible, and add a Home language selector with flags.
+- [ ] Verify language-isolated sets, review, progress, photo editing and mobile layouts in a signed-in browser.
