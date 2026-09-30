@@ -15,8 +15,9 @@ import {
   completeReviewSession,
   openReviewSession,
   saveSessionProgress,
+  type ReviewOutcome,
 } from "@/lib/verba/reviews";
-import type { ReviewKind } from "@/lib/verba/schedule";
+import { countdown, type ReviewKind } from "@/lib/verba/schedule";
 import type { Skill, Word } from "@/lib/verba/types";
 
 const str = (value: unknown) => (typeof value === "string" && value ? value : undefined);
@@ -105,12 +106,13 @@ function EmptyState() {
 /** Word Set review run: resumable, completes the schedule only at the very end. */
 function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const { deviceId } = useLearner();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [phaseOverride, setPhaseOverride] = useState<"sentences" | "done" | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [outcome, setOutcome] = useState<ReviewOutcome | null>(null);
 
   const { data, isPending, error } = useQuery({
     queryKey: ["review-run", setId, kind],
@@ -157,7 +159,7 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
     setFinishing(true);
     setFinishError(null);
     try {
-      if (session) await completeReviewSession(session.id);
+      if (session) setOutcome(await completeReviewSession(session.id));
       refreshAll();
       setPhaseOverride("done");
     } catch (e) {
@@ -193,6 +195,22 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
         <p className="mt-2 text-sm text-muted-foreground">
           {session ? t("review.completeBody") : t("review.practiceBody")}
         </p>
+        {outcome?.recall ? (
+          <div className="card-surface mt-6 w-full space-y-2 p-5 text-start text-sm">
+            <p className="font-bold">{t(`review.recall.${outcome.recall}` as never)}</p>
+            <p className="text-muted-foreground">
+              {t("review.outcomeScore", { correct: outcome.correct ?? 0, total: (outcome.correct ?? 0) + (outcome.incorrect ?? 0) })}
+            </p>
+            {outcome.timing === "long_delay" ? (
+              <p className="text-muted-foreground">{t("review.outcomeLate")}</p>
+            ) : null}
+            {outcome.next_review_at ? (
+              <p className="font-semibold text-primary-deep">
+                {t("review.outcomeNext", { when: countdown(outcome.next_review_at, locale) })}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <Button size="lg" className="mt-8 w-full rounded-2xl" onClick={backToSet}>
           {t("common.continue")}
         </Button>
