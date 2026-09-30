@@ -1,3 +1,4 @@
+import type React from "react";
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 
 import { LANGUAGES, isRtl, language, speechLocale, type LanguageMeta } from "./languages";
@@ -25,7 +26,9 @@ interface I18nValue {
   languageName: (code: string) => string;
 }
 
-const I18nContext = createContext<I18nValue | null>(null);
+// Keep one context instance across hot reloads so provider and consumers stay connected.
+const g = globalThis as { __lingoflowI18nContext?: React.Context<I18nValue | null> };
+const I18nContext = (g.__lingoflowI18nContext ??= createContext<I18nValue | null>(null));
 
 function interpolate(template: string, vars?: Record<string, string | number>) {
   if (!vars) return template;
