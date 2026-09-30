@@ -74,7 +74,7 @@ export function tagResponse(sessionId: string, response: string | null): string 
 /** Session key of an attempt. Older attempts stored before session tagging fall back to their day. */
 export function attemptSession(a: SkillAttempt): string {
   const m = a.response ? SESSION_PREFIX.exec(a.response) : null;
-  return m ? m[1] : `day:${a.created_at.slice(0, 10)}`;
+  return m?.[1] ? m[1] : `day:${a.created_at.slice(0, 10)}`;
 }
 
 export function stripSessionTag(response: string | null): string | null {

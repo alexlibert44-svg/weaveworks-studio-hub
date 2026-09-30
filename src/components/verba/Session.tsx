@@ -87,7 +87,7 @@ interface SessionProps {
   onFinished: () => void;
   onRestart?: () => void;
   /** When set, exit/finish return here instead of the sets list. */
-  onExit?: () => void;
+  onExit?: (() => void) | undefined;
 }
 
 export function Session({
