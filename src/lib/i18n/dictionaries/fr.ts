@@ -315,4 +315,5 @@ export const fr: Dictionary = {
   "auth.invalidLink": "Lien invalide ou expiré.",
   "auth.signedInAs": "Connecté en tant que",
   "auth.signout": "Se déconnecter",
+  "review.saveFailed": "Impossible d'enregistrer votre progression. Réessayez.",
 };

@@ -315,4 +315,5 @@ export const ar: Dictionary = {
   "auth.invalidLink": "رابط إعادة التعيين غير صالح أو منتهي. اطلب رابطًا جديدًا من صفحة الدخول.",
   "auth.signedInAs": "مسجّل الدخول باسم",
   "auth.signout": "تسجيل الخروج",
+  "review.saveFailed": "تعذّر حفظ تقدمك. تحقق من الاتصال وحاول مرة أخرى.",
 };

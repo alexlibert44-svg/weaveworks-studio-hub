@@ -315,4 +315,5 @@ export const es: Dictionary = {
   "auth.invalidLink": "Enlace no válido o caducado.",
   "auth.signedInAs": "Sesión iniciada como",
   "auth.signout": "Cerrar sesión",
+  "review.saveFailed": "No se pudo guardar tu progreso. Inténtalo de nuevo.",
 };

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, RotateCcw, SkipForward, X } from "lucide-react";
 import { useState } from "react";
@@ -51,7 +52,7 @@ export function SentencePractice({
 
   const persist = async (nextIndex: number, next: Record<string, SentenceEntry>) => {
     setEntries(next);
-    await onSave(nextIndex, next).catch(() => undefined);
+    await onSave(nextIndex, next).catch(() => toast.error(t("review.saveFailed")));
   };
 
   const check = async () => {

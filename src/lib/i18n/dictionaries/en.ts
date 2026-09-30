@@ -314,6 +314,7 @@ export const en = {
   "auth.invalidLink": "This reset link is invalid or has expired. Request a new one from the sign-in page.",
   "auth.signedInAs": "Signed in as",
   "auth.signout": "Sign out",
+  "review.saveFailed": "Couldn't save your progress. Check your connection and try again.",
 } as const;
 
 export type MessageKey = keyof typeof en;

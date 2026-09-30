@@ -109,6 +109,8 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [phaseOverride, setPhaseOverride] = useState<"sentences" | "done" | null>(null);
+  const [finishError, setFinishError] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   const { data, isPending, error } = useQuery({
     queryKey: ["review-run", setId, kind],
@@ -152,10 +154,36 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const phase = phaseOverride ?? session?.phase ?? "units";
 
   const finishAll = async () => {
-    if (session) await completeReviewSession(session.id).catch(() => undefined);
-    refreshAll();
-    setPhaseOverride("done");
+    setFinishing(true);
+    setFinishError(null);
+    try {
+      if (session) await completeReviewSession(session.id);
+      refreshAll();
+      setPhaseOverride("done");
+    } catch (e) {
+      // Never show "complete" unless the schedule was actually saved.
+      setFinishError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setFinishing(false);
+    }
   };
+
+  if (finishError || finishing) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
+        {finishing ? (
+          <Spinner />
+        ) : (
+          <>
+            <p className="text-sm text-destructive" role="alert">{t("review.saveFailed")}</p>
+            <Button size="lg" className="mt-6 w-full rounded-2xl" onClick={() => void finishAll()}>
+              {t("review.retryEval")}
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   if (phase === "done") {
     return (
