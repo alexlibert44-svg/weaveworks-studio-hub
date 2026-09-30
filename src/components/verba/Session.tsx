@@ -7,7 +7,6 @@ import {
   PartyPopper,
   Play,
   RotateCcw,
-  Square,
   Volume2,
   X,
 } from "lucide-react";
