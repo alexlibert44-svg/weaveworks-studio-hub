@@ -11,3 +11,5 @@
 
 - Original-word mastery is derived from `practice_attempts` history (5+ correct, latest 5 correct, across 3+ sessions per skill); session ids are tagged into `response` as `[s:<id>]` because the external database schema can't be migrated from here.
 - Keep LingoFlow's visual palette in semantic `src/styles.css` tokens (purple, light blue, white, neutral, error red); shared components inherit these tokens so no success or warning state reintroduces green or yellow.
+- Accounts: learner rows keep the `device_id` column but it holds `auth.uid()::text`; RLS checks that. Why: reuse existing queries without a column rename.
+- Word Set review schedules are written only by the `complete_review_session` database function (triggers block client writes). Why: extra practice can never move a schedule.
