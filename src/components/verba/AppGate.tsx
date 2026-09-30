@@ -51,10 +51,8 @@ function browserLanguage(): string {
  * renders. Signed-out visitors only see the sign-in and password pages.
  */
 export function AppGate({ children }: { children: ReactNode }) {
-  // The resolved location matches what <Outlet /> is actually rendering during transitions.
-  const pathname = useRouterState({
-    select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname,
-  });
+  // Decide from the match <Outlet /> is actually rendering, not the pending URL.
+  const routeId = useRouterState({ select: (s) => s.matches[s.matches.length - 1]?.routeId ?? "" });
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [guestLang, setGuestLang] = useState("en");
@@ -78,7 +76,7 @@ export function AppGate({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.includes(routeId);
 
   if (session === undefined) return <Splash />;
 
