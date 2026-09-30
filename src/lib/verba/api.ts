@@ -5,8 +5,10 @@ import { generateForms } from "./forms.functions";
 import {
   FORM_SKILLS,
   UNIT_SKILLS,
-  unitMastered,
+  tagResponse,
   wordSkillItems,
+  wordStatus,
+  type SkillAttempt,
 } from "./progress";
 import { isDue, priority, schedule } from "./srs";
 import type {
@@ -27,6 +29,44 @@ const CORE_SKILLS: Skill[] = ["recognition", "writing", "speaking", "recall"];
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/* ------------------------------ word attempts ------------------------------ */
+
+/** Loads the stored graded attempts for the given learning items (chunked). */
+async function fetchAttempts(itemIds: string[]): Promise<SkillAttempt[]> {
+  const out: SkillAttempt[] = [];
+  for (let i = 0; i < itemIds.length; i += 150) {
+    const chunk = itemIds.slice(i, i + 150);
+    const { data, error } = await supabase
+      .from("practice_attempts")
+      .select("learning_item_id, skill, is_correct, score, response, created_at")
+      .in("learning_item_id", chunk)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    out.push(...((data ?? []) as SkillAttempt[]));
+  }
+  return out;
+}
+
+/** Original-word attempts (Writing, Pronunciation, Meaning only), grouped by word id. */
+export async function wordAttemptsByWord(
+  items: LearningItem[],
+): Promise<Map<string, SkillAttempt[]>> {
+  const unitItems = items.filter(
+    (i) => !i.form_id && i.form === "base" && UNIT_SKILLS.includes(i.skill),
+  );
+  const wordByItem = new Map(unitItems.map((i) => [i.id, i.word_id]));
+  const attempts = await fetchAttempts(unitItems.map((i) => i.id));
+  const map = new Map<string, SkillAttempt[]>();
+  for (const a of attempts) {
+    const wordId = wordByItem.get(a.learning_item_id);
+    if (!wordId) continue;
+    const list = map.get(wordId) ?? [];
+    list.push(a);
+    map.set(wordId, list);
+  }
+  return map;
 }
 
 /* ---------------------------------- learner --------------------------------- */
@@ -77,15 +117,16 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
   if (error) throw error;
 
   const now = Date.now();
+  const attemptsByWord = await wordAttemptsByWord((items ?? []) as LearningItem[]);
   return (sets ?? []).map((set) => {
     const setWords = (words ?? []).filter((w) => w.set_id === set.id);
     const setItems = ((items ?? []) as LearningItem[]).filter((i) => i.set_id === set.id);
     const dueCount = setItems.filter((i) => new Date(i.next_review_at).getTime() <= now).length;
-    const wordUnits = setWords.map((w) => wordSkillItems(setItems, w.id));
     const status: SetSummary["status"] =
       setItems.every((i) => i.attempts === 0)
         ? "new"
-        : wordUnits.length > 0 && wordUnits.every((u) => unitMastered(u, UNIT_SKILLS))
+        : setWords.length > 0 &&
+            setWords.every((w) => wordStatus(attemptsByWord.get(w.id) ?? []) === "mastered")
           ? "mastered"
           : "learning";
     return { ...(set as WordSet), wordCount: setWords.length, status, dueCount };
@@ -98,6 +139,7 @@ export async function getSet(setId: string): Promise<{
   items: LearningItem[];
   forms: WordForm[];
   formsGenerated: boolean;
+  attemptsByWord: Map<string, SkillAttempt[]>;
 }> {
   const [{ data: set, error }, { data: words }, { data: items }, { data: forms }] =
     await Promise.all([
@@ -107,7 +149,9 @@ export async function getSet(setId: string): Promise<{
       supabase.from("word_forms").select("*").eq("set_id", setId).order("position"),
     ]);
   if (error) throw error;
+  const attemptsByWord = await wordAttemptsByWord((items ?? []) as LearningItem[]);
   return {
+    attemptsByWord,
     set: set as WordSet,
     words: (words ?? []) as Word[],
     items: (items ?? []) as LearningItem[],
@@ -361,6 +405,7 @@ export async function getWord(wordId: string): Promise<{
   sentences: Sentence[];
   items: LearningItem[];
   set: WordSet;
+  attempts: SkillAttempt[];
 }> {
   const { data: word, error } = await supabase
     .from("words")
@@ -375,7 +420,10 @@ export async function getWord(wordId: string): Promise<{
     supabase.from("word_sets").select("*").eq("id", word.set_id).single(),
   ]);
 
+  const attempts =
+    (await wordAttemptsByWord((items ?? []) as LearningItem[])).get(wordId) ?? [];
   return {
+    attempts,
     word: word as Word,
     sentences: (sentences ?? []) as Sentence[],
     items: (items ?? []) as LearningItem[],
@@ -652,6 +700,7 @@ export async function recordAttempt(
   item: LearningItem,
   score: number,
   response: string | null,
+  sessionId?: string,
 ): Promise<LearningItem> {
   const update = schedule(item, score);
   const [{ data, error }] = await Promise.all([
@@ -662,7 +711,7 @@ export async function recordAttempt(
       skill: item.skill,
       is_correct: score >= 0.6,
       score,
-      response,
+      response: sessionId ? tagResponse(sessionId, response) : response,
     }),
   ]);
   if (error) throw error;
@@ -748,13 +797,15 @@ export async function getProfileStats(deviceId: string): Promise<ProfileStats> {
   const items = (data ?? []) as LearningItem[];
   const wordIds = [...new Set(items.map((i) => i.word_id))];
   const units = wordIds.map((id) => wordSkillItems(items, id));
+  const attemptsByWord = await wordAttemptsByWord(items);
   const progress = units.map((u) =>
     UNIT_SKILLS.reduce((a, sk) => a + Number(u.find((i) => i.skill === sk)?.mastery ?? 0), 0) /
     UNIT_SKILLS.length,
   );
   return {
     totalWords: wordIds.length,
-    masteredWords: units.filter((u) => unitMastered(u, UNIT_SKILLS)).length,
+    masteredWords: wordIds.filter((id) => wordStatus(attemptsByWord.get(id) ?? []) === "mastered")
+      .length,
     overallMastery:
       progress.length === 0 ? 0 : Math.round(progress.reduce((a, b) => a + b, 0) / progress.length),
   };
