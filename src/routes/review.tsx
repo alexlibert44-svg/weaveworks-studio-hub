@@ -3,7 +3,8 @@ import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppShell, PageTitle } from "@/components/verba/AppShell";
+import { AppShell } from "@/components/verba/AppShell";
+import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { ReviewUnitCard } from "@/components/verba/ReviewUnitCard";
 import { useI18n } from "@/lib/i18n";
@@ -55,7 +56,7 @@ function Segmented<T extends string>({
           onClick={() => onChange(o.key)}
           className={cn(
             "flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold transition-colors sm:text-sm",
-            value === o.key ? "bg-primary-soft text-primary-deep" : "text-foreground hover:bg-card",
+            value === o.key ? "card-surface text-primary-deep" : "text-foreground hover:bg-card",
           )}
         >
           <span className="truncate">{o.label}</span>
@@ -115,7 +116,10 @@ function ReviewPage() {
 
   return (
     <AppShell>
-      <PageTitle title={t("review.title")} subtitle={t("review.subtitle")} />
+      <SignatureFrame className="mb-6 pb-7">
+        <h1 className="text-2xl font-semibold text-hero-foreground">{t("review.title")}</h1>
+        <p className="mt-1 text-sm text-hero-foreground/90">{t("review.subtitle")}</p>
+      </SignatureFrame>
 
       {units === undefined ? (
         <Skeleton className="h-40 rounded-2xl" />

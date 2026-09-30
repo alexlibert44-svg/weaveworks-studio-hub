@@ -39,7 +39,7 @@ export function MasteryBar({ value, className }: { value: number; className?: st
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-secondary", className)}>
       <div
-        className="bg-primary h-full rounded-full transition-[width] duration-500"
+        className="progress-luminous h-full rounded-full transition-[width] duration-500"
         style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
       />
     </div>

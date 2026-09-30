@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppShell } from "@/components/verba/AppShell";
+import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -74,14 +75,16 @@ function ProfilePage() {
 
   return (
     <AppShell>
-      <header className="mb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">{t("profile.title")}</h1>
-        <Button asChild variant="ghost" size="icon" aria-label={t("profile.openSettings")}>
-          <Link to="/settings">
-            <Settings className="size-5" />
-          </Link>
-        </Button>
-      </header>
+      <SignatureFrame className="mb-5 pb-7">
+        <header className="flex items-center justify-between gap-3">
+          <h1 className="min-w-0 text-2xl font-semibold text-hero-foreground">{t("profile.title")}</h1>
+          <Button asChild variant="ghost" size="icon" className="shrink-0 text-hero-foreground hover:bg-hero-foreground/15 hover:text-hero-foreground" aria-label={t("profile.openSettings")}>
+            <Link to="/settings">
+              <Settings className="size-5" />
+            </Link>
+          </Button>
+        </header>
+      </SignatureFrame>
 
       <section className="card-surface flex flex-col items-center p-6 text-center animate-rise">
         <div className="relative">
@@ -93,14 +96,15 @@ function ProfilePage() {
             )}
           </div>
           {editing ? (
-            <button
+            <Button
+              size="icon"
               type="button"
               onClick={() => fileRef.current?.click()}
               aria-label={t("profile.changePhoto")}
-              className="absolute -bottom-1 -end-1 grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow"
+              className="absolute -bottom-1 -end-1 size-9 rounded-full"
             >
               {upload.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-            </button>
+            </Button>
           ) : null}
           <input
             ref={fileRef}

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppShell } from "@/components/verba/AppShell";
+import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { StatePill } from "@/components/verba/MasteryPill";
 import { useI18n } from "@/lib/i18n";
@@ -77,11 +78,7 @@ function Home() {
 
   return (
     <AppShell>
-      <div className="bg-hero-gradient animate-rise relative -mx-5 -mt-6 overflow-hidden rounded-b-4xl px-5 pt-8 pb-9 text-hero-foreground shadow-card">
-        <div aria-hidden="true" className="pointer-events-none absolute -end-14 -top-16 size-52 rounded-full bg-hero-circle-blue opacity-30" />
-        <div aria-hidden="true" className="pointer-events-none absolute end-6 top-24 size-24 rounded-full bg-hero-circle-purple opacity-35" />
-        <div aria-hidden="true" className="pointer-events-none absolute -start-14 bottom-2 size-40 rounded-full bg-hero-circle-blue opacity-20" />
-        <div className="relative z-10">
+      <SignatureFrame>
         <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
         <p className="mt-3 min-h-5 text-sm font-medium text-hero-foreground/90">{greeting ? t(greeting) : ""}</p>
         <p className="mt-1 text-sm text-hero-foreground/85">{t("home.learning", { language: target.native })}</p>
@@ -105,8 +102,7 @@ function Home() {
             </p>
           </div>
         </div>
-        </div>
-      </div>
+      </SignatureFrame>
 
       <div className="mt-7 mb-3 flex items-center justify-between gap-3">
         <h2 className="text-lg font-bold">{t("home.dueTitle")}</h2>
