@@ -8,6 +8,8 @@ import { getFreshAccessToken } from "@/lib/verba/session-token";
  * token was in storage and so produced "Unauthorized: Invalid token".
  */
 export const attachFreshSupabaseAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
-  const token = await getFreshAccessToken();
+  // During SSR this runs on the server, where there is no stored session.
+  if (typeof window === "undefined") return next();
+  const token = await getFreshAccessToken().catch(() => null);
   return next({ headers: token ? { Authorization: `Bearer ${token}` } : {} });
 });
