@@ -16,6 +16,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as SetsIndexRouteImport } from './routes/sets.index'
 import { Route as SetsSetIdIndexRouteImport } from './routes/sets.$setId.index'
@@ -57,6 +58,11 @@ const ReviewRoute = ReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTtsRoute = ApiTtsRouteImport.update({
   id: '/api/tts',
   path: '/api/tts',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/api/tts': typeof ApiTtsRoute
   '/sets/': typeof SetsIndexRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/api/tts': typeof ApiTtsRoute
   '/sets': typeof SetsIndexRoute
   '/sets/$setId': typeof SetsSetIdIndexRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/settings': typeof SettingsRoute
   '/api/tts': typeof ApiTtsRoute
   '/sets/': typeof SetsIndexRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/settings'
     | '/api/tts'
     | '/sets/'
     | '/sets/$setId/'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/settings'
     | '/api/tts'
     | '/sets'
     | '/sets/$setId'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/settings'
     | '/api/tts'
     | '/sets/'
     | '/sets/$setId/'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
+  SettingsRoute: typeof SettingsRoute
   ApiTtsRoute: typeof ApiTtsRoute
   SetsIndexRoute: typeof SetsIndexRoute
   SetsSetIdIndexRoute: typeof SetsSetIdIndexRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/tts': {
       id: '/api/tts'
       path: '/api/tts'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
+  SettingsRoute: SettingsRoute,
   ApiTtsRoute: ApiTtsRoute,
   SetsIndexRoute: SetsIndexRoute,
   SetsSetIdIndexRoute: SetsSetIdIndexRoute,
