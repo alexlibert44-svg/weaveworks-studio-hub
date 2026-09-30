@@ -244,11 +244,6 @@
   &:disabled, &[aria-disabled="true"] { filter: saturate(.5); transform: none; box-shadow: none; }
 }
 
-@utility progress-luminous-unused-placeholder {
-  background: var(--gradient-progress);
-  box-shadow: 0 0 8px -3px var(--primary);
-}
-
 .signature-frame {
   border: 1px solid color-mix(in srgb, var(--hero-circle-blue) 45%, transparent);
   border-top: 0;
