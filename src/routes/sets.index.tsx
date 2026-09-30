@@ -32,12 +32,12 @@ export const Route = createFileRoute("/sets/")({
 });
 
 function SetsPage() {
-  const { deviceId } = useLearner();
+  const { deviceId, learner } = useLearner();
   const { t } = useI18n();
 
   const { data: sets } = useQuery({
-    queryKey: ["sets", deviceId],
-    queryFn: () => listSets(deviceId),
+    queryKey: ["sets", deviceId, learner.learning_language],
+    queryFn: () => listSets(deviceId, learner.learning_language),
   });
 
   return (

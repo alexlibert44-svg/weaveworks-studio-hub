@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      language_daily_progress: {
+        Row: {
+          day: string
+          device_id: string
+          goal_minutes: number
+          id: string
+          items_completed: number
+          minutes_practiced: number
+          target_language: string
+        }
+        Insert: {
+          day?: string
+          device_id?: string
+          goal_minutes?: number
+          id?: string
+          items_completed?: number
+          minutes_practiced?: number
+          target_language: string
+        }
+        Update: {
+          day?: string
+          device_id?: string
+          goal_minutes?: number
+          id?: string
+          items_completed?: number
+          minutes_practiced?: number
+          target_language?: string
+        }
+        Relationships: []
+      }
       learners: {
         Row: {
           audio_autoplay: boolean

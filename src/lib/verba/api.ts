@@ -105,12 +105,13 @@ export async function updateLearner(
 
 /* ---------------------------------- sets ----------------------------------- */
 
-export async function listSets(deviceId: string): Promise<SetSummary[]> {
+export async function listSets(deviceId: string, targetLanguage: string): Promise<SetSummary[]> {
   const [{ data: sets, error }, { data: words }, { data: items }] = await Promise.all([
     supabase
       .from("word_sets")
       .select("*")
       .eq("device_id", deviceId)
+      .eq("target_language", targetLanguage)
       .order("created_at", { ascending: false }),
     supabase.from("words").select("id, set_id"),
     supabase.from("learning_items").select("*").eq("device_id", deviceId),
@@ -121,7 +122,8 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
     .eq("device_id", deviceId);
   if (error) throw error;
 
-  const attemptsByWord = await wordAttemptsByWord((items ?? []) as LearningItem[]);
+  const setIds = new Set((sets ?? []).map((set) => set.id));
+  const attemptsByWord = await wordAttemptsByWord(((items ?? []) as LearningItem[]).filter((i) => setIds.has(i.set_id)));
   return (sets ?? []).map((set) => {
     const setWords = (words ?? []).filter((w) => w.set_id === set.id);
     const setItems = ((items ?? []) as LearningItem[]).filter((i) => i.set_id === set.id);
@@ -458,6 +460,7 @@ export interface ReviewFilters {
 export async function buildQueue(
   deviceId: string,
   filters: ReviewFilters | string | null = null,
+  targetLanguage?: string,
 ): Promise<Exercise[]> {
   const f: ReviewFilters = typeof filters === "string" ? { setId: filters } : (filters ?? {});
   let query = supabase.from("learning_items").select("*").eq("device_id", deviceId);
@@ -471,6 +474,12 @@ export async function buildQueue(
   if (error) throw error;
 
   let items = (rawItems ?? []) as LearningItem[];
+  if (targetLanguage) {
+    const { data: activeSets, error: setsError } = await supabase.from("word_sets").select("id").eq("device_id", deviceId).eq("target_language", targetLanguage);
+    if (setsError) throw setsError;
+    const allowed = new Set((activeSets ?? []).map((set) => set.id));
+    items = items.filter((item) => allowed.has(item.set_id));
+  }
   if (f.wordId && !f.formId) items = items.filter((i) => UNIT_SKILLS.includes(i.skill) && i.form === "base");
   if (items.length === 0) return [];
 
@@ -609,41 +618,48 @@ function saneMinutes(value: unknown): number {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
 }
 
-export async function getDailyProgress(deviceId: string): Promise<DailyProgress> {
-  const { data } = await supabase
-    .from("daily_progress")
+export async function getDailyProgress(deviceId: string, targetLanguage: string): Promise<DailyProgress> {
+  const { data, error: readError } = await supabase
+    .from("language_daily_progress")
     .select("*")
     .eq("device_id", deviceId)
+    .eq("target_language", targetLanguage)
     .eq("day", today())
     .maybeSingle();
+  if (readError) throw readError;
   if (data) return { ...(data as DailyProgress), minutes_practiced: saneMinutes(data.minutes_practiced) };
 
   const learner = await ensureLearner(deviceId);
   const { data: created, error } = await supabase
-    .from("daily_progress")
-    .insert({ device_id: deviceId, day: today(), goal_minutes: learner.daily_goal_minutes })
+    .from("language_daily_progress")
+    .upsert({ device_id: deviceId, day: today(), target_language: targetLanguage, goal_minutes: learner.daily_goal_minutes }, { onConflict: "device_id,day,target_language", ignoreDuplicates: true })
     .select("*")
-    .single();
+    .maybeSingle();
   if (error) throw error;
-  return created as DailyProgress;
+  if (created) return created as DailyProgress;
+  const { data: existing, error: existingError } = await supabase.from("language_daily_progress").select("*").eq("device_id", deviceId).eq("day", today()).eq("target_language", targetLanguage).single();
+  if (existingError) throw existingError;
+  return existing as DailyProgress;
 }
 
 /** Called when a session finishes: real minutes, real item count, real streak. */
-export async function logSession(deviceId: string, minutes: number, itemsCompleted: number) {
-  const progress = await getDailyProgress(deviceId);
-  await supabase
-    .from("daily_progress")
+export async function logSession(deviceId: string, minutes: number, itemsCompleted: number, targetLanguage: string) {
+  const progress = await getDailyProgress(deviceId, targetLanguage);
+  const { error: saveError } = await supabase
+    .from("language_daily_progress")
     .update({
       minutes_practiced: saneMinutes(progress.minutes_practiced) + saneMinutes(minutes),
       items_completed: progress.items_completed + itemsCompleted,
     })
     .eq("id", progress.id);
+  if (saveError) throw saveError;
 
   const learner = await ensureLearner(deviceId);
   const { data: history } = await supabase
-    .from("daily_progress")
+    .from("language_daily_progress")
     .select("day, minutes_practiced")
     .eq("device_id", deviceId)
+    .eq("target_language", targetLanguage)
     .order("day", { ascending: false })
     .limit(60);
 
@@ -667,6 +683,17 @@ function computeStreak(days: { day: string; minutes_practiced: number }[]): numb
   return streak;
 }
 
+export async function getLanguageStreak(deviceId: string, targetLanguage: string): Promise<number> {
+  const { data, error } = await supabase.from("language_daily_progress")
+    .select("day, minutes_practiced")
+    .eq("device_id", deviceId)
+    .eq("target_language", targetLanguage)
+    .order("day", { ascending: false })
+    .limit(60);
+  if (error) throw error;
+  return computeStreak((data ?? []) as { day: string; minutes_practiced: number }[]);
+}
+
 export interface ProfileStats {
   totalWords: number;
   masteredWords: number;
@@ -674,12 +701,18 @@ export interface ProfileStats {
   learningWords: number;
 }
 
-export async function getProfileStats(deviceId: string): Promise<ProfileStats> {
-  const { data } = await supabase
+export async function getProfileStats(deviceId: string, targetLanguage: string): Promise<ProfileStats> {
+  const { data: sets, error: setsError } = await supabase.from("word_sets").select("id").eq("device_id", deviceId).eq("target_language", targetLanguage);
+  if (setsError) throw setsError;
+  const setIds = (sets ?? []).map((set) => set.id);
+  if (setIds.length === 0) return { totalWords: 0, masteredWords: 0, learningWords: 0, overallMastery: 0 };
+  const { data, error } = await supabase
     .from("learning_items")
     .select("*")
     .eq("device_id", deviceId)
+    .in("set_id", setIds)
     .is("form_id", null);
+  if (error) throw error;
   const items = (data ?? []) as LearningItem[];
   const wordIds = [...new Set(items.map((i) => i.word_id))];
   const units = wordIds.map((id) => wordSkillItems(items, id));

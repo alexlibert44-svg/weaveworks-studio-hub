@@ -46,7 +46,7 @@ function SettingsPage() {
 
   const save = useMutation({
     mutationFn: (patch: Partial<Omit<Learner, "device_id">>) => updateLearner(deviceId, patch),
-    onSuccess: refresh,
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["learner", deviceId] }); refresh(); },
   });
 
   const signOut = async () => {
@@ -96,7 +96,7 @@ function SettingsPage() {
 
       <Section title={t("settings.learning")}>
         <div className="card-surface p-4">
-          <p className="mb-3 text-sm font-semibold">{t("profile.goal")}</p>
+          <p className="mb-3 text-sm font-semibold">{t("profile.goal")} · {learner.daily_goal_minutes} {t("common.minutesShort")}</p>
           <ul className="grid grid-cols-4 gap-2">
             {GOALS.map((minutes) => (
               <li key={minutes}>
@@ -104,6 +104,7 @@ function SettingsPage() {
                   type="button"
                   variant={learner.daily_goal_minutes === minutes ? "default" : "secondary"}
                   onClick={() => save.mutate({ daily_goal_minutes: minutes })}
+                  disabled={save.isPending}
                   aria-pressed={learner.daily_goal_minutes === minutes}
                   className="w-full px-1"
                 >
@@ -112,6 +113,7 @@ function SettingsPage() {
               </li>
             ))}
           </ul>
+          {save.isError ? <p role="alert" className="mt-2 text-sm text-destructive">{t("settings.saveError")}</p> : null}
         </div>
       </Section>
 

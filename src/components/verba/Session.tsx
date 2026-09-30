@@ -93,6 +93,7 @@ interface SessionProps {
   title: string;
   /** BCP-47 tag of the language being learned. */
   locale: string;
+  targetLanguage: string;
   onFinished: () => void;
   onRestart?: () => void;
   /** When set, exit/finish return here instead of the sets list. */
@@ -110,6 +111,7 @@ export function Session({
   exercises,
   title,
   locale,
+  targetLanguage,
   onFinished,
   onRestart,
   onExit,
@@ -148,11 +150,11 @@ export function Session({
 
   const finish = useCallback(() => {
     const minutes = Math.max(0.5, Math.round(((Date.now() - startedAt.current) / 60000) * 10) / 10);
-    void logSession(deviceId, minutes, total).catch(() => undefined);
+    void logSession(deviceId, minutes, total, targetLanguage).catch(() => undefined);
     onFinished();
     if (onComplete) onComplete();
     else setDone(true);
-  }, [deviceId, onFinished, onComplete, total]);
+  }, [deviceId, onFinished, onComplete, total, targetLanguage]);
 
   const next = () => {
     const position = STEPS.indexOf(step);

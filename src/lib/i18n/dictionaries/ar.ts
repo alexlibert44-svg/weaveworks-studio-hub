@@ -151,6 +151,7 @@ export const ar: Dictionary = {
   "settings.notifications": "الإشعارات",
 
   "settings.audioHint": "تشغيل نطق الكلمة تلقائيًا عند ظهور كلمة جديدة.",
+  "settings.saveError": "تعذّر حفظ التغييرات. حاول مرة أخرى.",
 
   "profile.edit": "تعديل الملف الشخصي",
 

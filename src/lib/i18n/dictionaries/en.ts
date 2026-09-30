@@ -150,6 +150,7 @@ export const en = {
   "settings.notifications": "Notifications",
 
   "settings.audioHint": "Play the word automatically when a new word appears.",
+  "settings.saveError": "Couldn't save your changes. Try again.",
 
   "profile.edit": "Edit profile",
 
