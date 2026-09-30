@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 /**
  * Real pronunciation evaluation.
  *
@@ -49,6 +51,7 @@ function tokens(text: string): string[] {
 }
 
 export const evaluatePronunciation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }): Promise<PronunciationResult> => {
     const key = process.env["LOVABLE_API_KEY"];
