@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppGate } from "@/components/verba/AppGate";
 import { Toaster } from "@/components/ui/sonner";
+import { isAuthFailure, recoverSession } from "@/lib/verba/session-token";
 
 function NotFoundComponent() {
   return (
