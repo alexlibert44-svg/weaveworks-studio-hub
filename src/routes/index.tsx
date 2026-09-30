@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Flame, Plus, Sparkles, Target } from "lucide-react";
+import { Check, ChevronDown, Flame, Plus, Sparkles, Target } from "lucide-react";
 
 import { ReviewUnitCard } from "@/components/verba/ReviewUnitCard";
 import { unitState } from "@/lib/verba/reviews";
 import { useReviewUnits } from "@/lib/verba/use-review-units";
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +18,7 @@ import { useI18n } from "@/lib/i18n";
 import { getDailyProgress, getLanguageStreak, listSets, updateLearner } from "@/lib/verba/api";
 import { TARGET_LANGUAGES } from "@/lib/i18n/languages";
 
-const TARGET_FLAGS: Record<string, string> = { en: "🇬🇧", fr: "🇫🇷", es: "🇪🇸", de: "🇩🇪" };
+const TARGET_FLAGS: Record<string, string> = { en: "/flags/gb.svg", fr: "/flags/fr.svg", es: "/flags/es.svg", de: "/flags/de.svg" };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,6 +52,16 @@ function Home() {
   const { deviceId, learner, refresh } = useLearner();
   const { t, target } = useI18n();
   const queryClient = useQueryClient();
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const languageMenu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!languageOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!languageMenu.current?.contains(event.target as Node)) setLanguageOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [languageOpen]);
   const changeLanguage = useMutation({
     mutationFn: (code: string) => updateLearner(deviceId, { learning_language: code }),
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["learner", deviceId] }); refresh(); },
@@ -92,22 +103,40 @@ function Home() {
     <AppShell>
       <SignatureFrame>
         <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
-        <div className="mt-4 flex items-center gap-2">
-          <label htmlFor="home-language" className="sr-only">{t("profile.target")}</label>
-          <select
-            id="home-language"
-            value={learner.learning_language}
-            onChange={(event) => changeLanguage.mutate(event.target.value)}
-            disabled={changeLanguage.isPending}
+        <div className="relative mt-4 w-fit max-w-full" ref={languageMenu}>
+          <Button
+            type="button"
+            variant="ghost"
             aria-label={t("profile.target")}
-            className="min-h-11 max-w-full rounded-full border border-hero-foreground/40 bg-hero-foreground/15 px-4 text-sm font-semibold text-hero-foreground shadow-card backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-hero-foreground disabled:opacity-60"
+            aria-expanded={languageOpen}
+            aria-controls="home-language-options"
+            onClick={() => setLanguageOpen((open) => !open)}
+            disabled={changeLanguage.isPending}
+            className="h-11 max-w-full gap-2 border border-hero-foreground/40 bg-hero-foreground/15 px-3 text-hero-foreground shadow-card backdrop-blur-sm hover:bg-hero-foreground/25 hover:text-hero-foreground"
           >
-            {TARGET_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code} className="text-foreground">
-                {TARGET_FLAGS[lang.code] ?? "🌐"} {lang.native}
-              </option>
-            ))}
-          </select>
+            {TARGET_FLAGS[target.code] ? <img src={TARGET_FLAGS[target.code]} alt="" className="h-4 w-6 shrink-0 rounded-sm object-cover" /> : <span aria-hidden="true">🌐</span>}
+            <span className="truncate" dir="auto">{target.native}</span>
+            <ChevronDown className="size-4 shrink-0" />
+          </Button>
+          {languageOpen ? (
+            <div id="home-language-options" className="absolute start-0 top-full z-30 mt-2 max-h-64 w-56 max-w-[calc(100vw-2.5rem)] overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-card">
+              {TARGET_LANGUAGES.map((lang) => (
+                <Button
+                  key={lang.code}
+                  type="button"
+                  variant="ghost"
+                  aria-label={lang.english}
+                  aria-current={learner.learning_language === lang.code ? "true" : undefined}
+                  onClick={() => { setLanguageOpen(false); if (lang.code !== learner.learning_language) changeLanguage.mutate(lang.code); }}
+                  className="h-11 w-full justify-start gap-2 rounded-lg px-3 text-foreground hover:bg-secondary"
+                >
+                  {TARGET_FLAGS[lang.code] ? <img src={TARGET_FLAGS[lang.code]} alt="" className="h-4 w-6 shrink-0 rounded-sm object-cover" /> : <span aria-hidden="true" className="w-6 text-center">🌐</span>}
+                  <span className="min-w-0 flex-1 truncate text-start" dir="auto">{lang.native}</span>
+                  {learner.learning_language === lang.code ? <Check className="size-4 shrink-0 text-primary" /> : null}
+                </Button>
+              ))}
+            </div>
+          ) : null}
           {changeLanguage.isError ? <span role="alert" className="text-xs text-hero-foreground">{t("settings.saveError")}</span> : null}
         </div>
         <p className="mt-3 min-h-5 text-sm font-medium text-hero-foreground/90">{greeting ? t(greeting) : ""}</p>
