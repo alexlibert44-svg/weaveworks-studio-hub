@@ -1,36 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Flame, Languages, LogOut } from "lucide-react";
-
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Camera, Flame, Loader2, Pencil, Settings, User } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { AppShell, PageTitle } from "@/components/verba/AppShell";
+import { AppShell } from "@/components/verba/AppShell";
 import { useLearner } from "@/components/verba/AppGate";
+import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { LANGUAGES, TARGET_LANGUAGES, type LanguageMeta } from "@/lib/i18n/languages";
 import { getProfileStats, updateLearner } from "@/lib/verba/api";
-import type { Learner } from "@/lib/verba/types";
-
-const GOALS = [5, 10, 15, 30];
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
       { title: "Profile — LingoFlow" },
-      {
-        name: "description",
-        content:
-          "Your languages, daily goal and real progress: words learned, mastery and your streak.",
-      },
+      { name: "description", content: "Your LingoFlow profile and real learning progress: words, mastered words and streaks." },
       { property: "og:title", content: "Profile — LingoFlow" },
-      {
-        property: "og:description",
-        content: "Change your languages and daily goal, and see your real progress.",
-      },
+      { property: "og:description", content: "Your picture, name and real learning progress." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -39,117 +26,129 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { deviceId, email, learner, refresh } = useLearner();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const signOut = async () => {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    void navigate({ to: "/auth", replace: true });
-  };
+  const { deviceId, learner, refresh } = useLearner();
   const { t } = useI18n();
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState(learner.display_name ?? "");
+  const [photoError, setPhotoError] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: stats } = useQuery({
     queryKey: ["stats", deviceId],
     queryFn: () => getProfileStats(deviceId),
   });
 
-  const save = useMutation({
-    mutationFn: (patch: Partial<Omit<Learner, "device_id">>) => updateLearner(deviceId, patch),
+  const avatarPath = learner.avatar_path ?? null;
+  const { data: avatarUrl } = useQuery({
+    queryKey: ["avatar", avatarPath],
+    enabled: !!avatarPath,
+    staleTime: 50 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("avatars").createSignedUrl(avatarPath!, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+  });
+
+  const saveName = useMutation({
+    mutationFn: () => updateLearner(deviceId, { display_name: name.trim() || "Learner" }),
+    onSuccess: async () => {
+      await refresh();
+      setEditing(false);
+    },
+  });
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${deviceId}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type });
+      if (error) throw error;
+      await updateLearner(deviceId, { avatar_path: path });
+      if (avatarPath) void supabase.storage.from("avatars").remove([avatarPath]);
+    },
+    onMutate: () => setPhotoError(false),
+    onError: () => setPhotoError(true),
     onSuccess: refresh,
   });
 
   return (
     <AppShell>
-      <PageTitle title={t("profile.title")} />
+      <header className="mb-2 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-foreground">{t("profile.title")}</h1>
+        <Button asChild variant="ghost" size="icon" aria-label={t("profile.openSettings")}>
+          <Link to="/settings">
+            <Settings className="size-5" />
+          </Link>
+        </Button>
+      </header>
 
-      <div className="card-surface p-5">
-        <label className="text-sm font-semibold" htmlFor="display-name">
-          {t("profile.nameLabel")}
-        </label>
-        <div className="mt-2 flex min-w-0 gap-2">
-          <Input
-            id="display-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="h-11 rounded-xl"
-          />
-          <Button
-            className="h-11 rounded-xl"
-            onClick={() => save.mutate({ display_name: name.trim() })}
-            disabled={save.isPending}
-          >
-            {t("common.save")}
-          </Button>
-        </div>
-      </div>
-
-      <h2 className="mt-6 mb-3 flex items-center gap-2 text-lg font-bold">
-        <Languages className="size-4 text-primary" /> {t("profile.languages")}
-      </h2>
-      <div className="card-surface space-y-4 p-5">
-        <LanguageSelect
-          label={t("profile.native")}
-          value={learner.native_language}
-          languages={LANGUAGES}
-          onChange={(code) => save.mutate({ native_language: code })}
-        />
-        <LanguageSelect
-          label={t("profile.target")}
-          value={learner.learning_language}
-          languages={TARGET_LANGUAGES}
-          onChange={(code) => save.mutate({ learning_language: code })}
-        />
-        <p className="text-xs text-muted-foreground">{t("profile.targetChangeNote")}</p>
-      </div>
-
-      <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.goal")}</h2>
-      <ul className="grid grid-cols-4 gap-2">
-        {GOALS.map((minutes) => (
-          <li key={minutes}>
+      <section className="card-surface flex flex-col items-center p-6 text-center animate-rise">
+        <div className="relative">
+          <div className="grid size-24 place-items-center overflow-hidden rounded-full bg-secondary text-primary">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={learner.display_name} className="size-full object-cover" />
+            ) : (
+              <User className="size-10" />
+            )}
+          </div>
+          {editing ? (
             <button
               type="button"
-              onClick={() => save.mutate({ daily_goal_minutes: minutes })}
-              aria-pressed={learner.daily_goal_minutes === minutes}
-              className={
-                learner.daily_goal_minutes === minutes
-                  ? "w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground"
-                  : "w-full rounded-lg border border-border bg-card py-3 text-sm font-semibold text-foreground"
-              }
+              onClick={() => fileRef.current?.click()}
+              aria-label={t("profile.changePhoto")}
+              className="absolute -bottom-1 -end-1 grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow"
             >
-              {minutes} {t("common.minutesShort")}
+              {upload.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
             </button>
-          </li>
-        ))}
-      </ul>
+          ) : null}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) upload.mutate(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
 
-      <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.settings")}</h2>
-      <div className="card-surface divide-y divide-border">
-        <div className="flex items-center justify-between p-4">
-          <span className="text-sm font-semibold">{t("profile.audio")}</span>
-          <Switch
-            checked={learner.audio_autoplay}
-            onCheckedChange={(checked) => save.mutate({ audio_autoplay: checked })}
-            aria-label={t("profile.audio")}
-          />
-        </div>
-        <div className="flex items-center justify-between p-4">
-          <span className="text-sm font-semibold">{t("profile.notifications")}</span>
-          <Switch
-            checked={learner.notifications_enabled}
-            onCheckedChange={(checked) => save.mutate({ notifications_enabled: checked })}
-            aria-label={t("profile.notifications")}
-          />
-        </div>
-      </div>
+        {editing ? (
+          <div className="mt-5 w-full">
+            <label className="sr-only" htmlFor="display-name">{t("profile.nameLabel")}</label>
+            <Input
+              id="display-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-11 rounded-xl text-center"
+            />
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Button variant="secondary" onClick={() => { setName(learner.display_name ?? ""); setEditing(false); }}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={() => saveName.mutate()} disabled={saveName.isPending}>
+                {t("common.save")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-4 text-xl font-semibold">{learner.display_name}</p>
+            <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(true)}>
+              <Pencil className="size-3.5" /> {t("profile.edit")}
+            </Button>
+          </>
+        )}
+        {photoError ? <p className="mt-3 text-sm text-destructive">{t("profile.photoError")}</p> : null}
+      </section>
 
       <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.stats")}</h2>
       <ul className="grid grid-cols-2 gap-2.5">
         <StatCard label={t("profile.statWords")} value={stats?.totalWords ?? 0} />
+        <StatCard label={t("profile.statLearning")} value={stats?.learningWords ?? 0} />
         <StatCard label={t("profile.statMastered")} value={stats?.masteredWords ?? 0} />
-        <StatCard label={t("common.mastery")} value={`${stats?.overallMastery ?? 0}%`} />
         <StatCard
           label={t("profile.statStreak")}
           value={learner.streak}
@@ -157,27 +156,11 @@ function ProfilePage() {
         />
         <StatCard label={t("profile.statLongest")} value={learner.longest_streak} />
       </ul>
-
-      <div className="card-surface mt-6 p-5">
-        <p className="text-xs text-muted-foreground">{t("auth.signedInAs")}</p>
-        <p className="mt-0.5 truncate text-sm font-semibold" dir="ltr">{email}</p>
-        <Button variant="secondary" className="mt-4 w-full" onClick={() => void signOut()}>
-          <LogOut className="size-4 rtl:rotate-180" /> {t("auth.signout")}
-        </Button>
-      </div>
     </AppShell>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string | number;
-  icon?: React.ReactNode;
-}) {
+function StatCard({ label, value, icon }: { label: string; value: string | number; icon?: React.ReactNode }) {
   return (
     <li className="card-surface p-4">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -186,35 +169,5 @@ function StatCard({
       </div>
       <p className="mt-1 text-xl font-bold">{value}</p>
     </li>
-  );
-}
-
-function LanguageSelect({
-  label,
-  value,
-  languages,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  languages: LanguageMeta[];
-  onChange: (code: string) => void;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-semibold">{label}</label>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-label={label}
-        className="mt-1.5 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {languages.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.native} — {lang.english}
-          </option>
-        ))}
-      </select>
-    </div>
   );
 }
