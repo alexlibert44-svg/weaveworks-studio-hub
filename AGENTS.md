@@ -15,3 +15,4 @@
 - Word Set review schedules are written only by the `complete_review_session` database function (triggers block client writes). Why: extra practice can never move a schedule.
 - Review scheduling is adaptive and computed only in `complete_review_session` from the session's real answers (accuracy ≥85% strong, ≥60% moderate, else poor) plus timing (on time / late / long delay); results are stored on `review_sessions`. Why: deterministic, persisted, never AI-chosen.
 - Meaning multiple-choice distractors come from `getMeaningQuestion` (AI, validated: 3 unique non-matching options, retried up to 3 times); the correct answer is always the saved meaning. Why: works for single-word sessions without fake options.
+- Profile pictures live in the private `avatars` bucket at `<uid>/...`; `learners.avatar_path` stores the path and the UI uses signed URLs. Why: workspace blocks public buckets.
