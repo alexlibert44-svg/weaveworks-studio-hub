@@ -125,14 +125,14 @@ function ReviewPage() {
         </div>
       ) : (
         <>
-          <div className="bg-hero-gradient animate-rise rounded-3xl p-6 text-primary-foreground">
-            <p className="text-sm opacity-85">{t("review.due")}</p>
-            <p className="mt-1 text-4xl font-bold">{due.total}</p>
+          <div className="bg-hero-gradient animate-rise rounded-lg border border-border p-6 text-foreground">
+            <p className="text-sm text-muted-foreground">{t("review.due")}</p>
+            <p className="mt-1 text-4xl font-semibold text-primary-deep">{due.total}</p>
             <Button
               asChild
               size="lg"
               disabled={filteredCount === 0}
-              className="mt-5 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
+              className="mt-5 w-full"
             >
               <Link
                 to="/practice"

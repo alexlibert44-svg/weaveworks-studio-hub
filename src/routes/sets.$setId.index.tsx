@@ -131,7 +131,7 @@ function SetDetail() {
             onClick={() => setTab(key)}
             className={cn(
               "rounded-xl py-2 text-sm font-semibold transition-colors",
-              tab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+               tab === key ? "bg-primary-soft text-primary-deep" : "text-foreground hover:bg-card",
             )}
           >
             {t(key === "words" ? "set.tabWords" : "set.tabForms")}

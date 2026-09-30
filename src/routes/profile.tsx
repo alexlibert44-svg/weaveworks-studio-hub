@@ -189,7 +189,7 @@ function LanguageSelect({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-label={label}
-        className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm font-semibold"
+        className="mt-1.5 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>
