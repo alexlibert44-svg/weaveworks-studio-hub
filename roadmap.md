@@ -12,5 +12,5 @@
 - [x] Restore the original signature frame and keep Profile photo/name inside it with progress below.
 - [x] Keep the Settings daily goal saved and visible, and add a Home language selector with flags.
 - [x] Verify language-isolated sets, review, progress, photo editing and mobile layouts in a signed-in browser.
-- [ ] Fix Home language list touch scrolling and reuse the selector in Settings without changing saved language data.
-- [ ] Refine the Profile photo ring and shared light-blue buttons; verify mobile, language independence, and touch interaction.
+- [x] Fix Home language list touch scrolling and reuse the selector in Settings without changing saved language data.
+- [x] Refine the Profile photo ring and shared light-blue buttons; verify mobile, language independence, and touch interaction.
