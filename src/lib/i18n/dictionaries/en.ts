@@ -240,7 +240,7 @@ export const en = {
   "train.pronMissed": "Needs practice",
   "train.pronFailed": "Speech analysis failed. Please try again.",
   "train.writeSentenceHint": "Write the whole sentence in the language you are learning.",
-  "train.tapForHint": "Tap any word to see it in the language you are learning.",
+  "train.tapForHint": "Tap any word to see its meaning here.",
   "train.writeMissing": "Missing words",
   "train.writeExtra": "Extra words",
   "word.skillWriting": "Writing",
@@ -315,6 +315,9 @@ export const en = {
   "auth.signedInAs": "Signed in as",
   "auth.signout": "Sign out",
   "review.saveFailed": "Couldn't save your progress. Check your connection and try again.",
+  "audio.retry": "Audio failed — retry",
+  "train.showTranslation": "Show translation",
+  "train.noMeaning": "No meaning found",
 } as const;
 
 export type MessageKey = keyof typeof en;
