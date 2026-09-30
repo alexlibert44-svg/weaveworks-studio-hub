@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { language } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
 import { getWordGlosses, type WordGloss } from "@/lib/verba/gloss.functions";
+import { handleAuthFailure } from "@/lib/verba/session-token";
 import type { Sentence } from "@/lib/verba/types";
 
 const clean = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, "");
@@ -65,7 +66,9 @@ export function TappableSentence({
         },
       });
       setGlosses(result);
-    } catch {
+    } catch (cause) {
+      // Renew an expired sign-in silently; the hint simply retries next tap.
+      await handleAuthFailure(cause);
       setError(true);
     } finally {
       setLoading(false);
