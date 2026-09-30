@@ -113,10 +113,10 @@
   --sidebar-accent-foreground: #263D5A;
   --sidebar-border: #E5DFF7;
   --sidebar-ring: #6F63D9;
-  --hero-foreground: #FFFFFF;
+  --hero-foreground: #2D2A4A;
   --hero-circle-blue: #A8D8FF;
   --hero-circle-purple: #DDD2FF;
-  --gradient-hero: linear-gradient(125deg, #6F63D9 0%, #8B7CF6 56%, #718FD8 100%);
+  --gradient-hero: linear-gradient(125deg, #83C9FF 0%, #A8D8FF 28%, #C7B5FF 69%, #DDD2FF 100%);
   --gradient-accent: linear-gradient(120deg, #83C9FF 0%, #A8D8FF 30%, #C7B5FF 100%);
   --gradient-surface: linear-gradient(155deg, #FFFFFF 0%, #FFFFFF 58%, #F8F5FF 100%);
   --gradient-progress: linear-gradient(90deg, #83C9FF, #8B7CF6);
@@ -154,10 +154,10 @@
   --border: #3F4A60;
   --input: #4B566B;
   --ring: #A8A2FF;
-  --hero-foreground: #FFFFFF;
+  --hero-foreground: #F8FAFC;
   --hero-circle-blue: #A8D8F0;
   --hero-circle-purple: #EAE8FF;
-  --gradient-hero: linear-gradient(135deg, #554CCB 0%, #6C63E8 54%, #708EDC 100%);
+  --gradient-hero: linear-gradient(125deg, #426587 0%, #514E83 58%, #604F90 100%);
   --gradient-accent: #A8A2FF;
   --gradient-surface: #222C40;
 }
@@ -234,9 +234,8 @@
 }
 
 .signature-frame {
-  border: 1px solid color-mix(in srgb, var(--hero-circle-blue) 45%, transparent);
-  border-top: 0;
-  box-shadow: 0 1px 0 color-mix(in srgb, white 28%, transparent) inset, 0 18px 32px -22px color-mix(in srgb, var(--primary-deep) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hero-circle-blue) 65%, var(--primary-soft));
+  box-shadow: 0 2px 0 color-mix(in srgb, white 60%, transparent) inset, 0 18px 32px -22px color-mix(in srgb, var(--primary-deep) 45%, transparent);
 }
 
 .signature-frame > .relative > div[class*="backdrop-blur"] {
