@@ -671,6 +671,7 @@ export interface ProfileStats {
   totalWords: number;
   masteredWords: number;
   overallMastery: number;
+  learningWords: number;
 }
 
 export async function getProfileStats(deviceId: string): Promise<ProfileStats> {
