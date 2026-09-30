@@ -70,9 +70,10 @@ function Home() {
   });
 
   const recent = sets?.[0];
-  const goal = learner.daily_goal_minutes;
-  const minutes = Number(today?.minutes_practiced ?? 0);
-  const goalPct = Math.min(100, Math.round((minutes / goal) * 100));
+  const goal = Math.max(1, Number(learner.daily_goal_minutes) || 1);
+  const rawMinutes = Number(today?.minutes_practiced ?? 0);
+  const minutes = Number.isFinite(rawMinutes) && rawMinutes > 0 ? Math.round(rawMinutes) : 0;
+  const goalPct = Math.max(0, Math.min(100, Math.round((minutes / goal) * 100)));
 
   return (
     <AppShell>

@@ -603,6 +603,12 @@ export async function recordAttempt(
 
 /* -------------------------------- progress --------------------------------- */
 
+/** Minutes are always a finite, non-negative, whole number for display. */
+function saneMinutes(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
 export async function getDailyProgress(deviceId: string): Promise<DailyProgress> {
   const { data } = await supabase
     .from("daily_progress")
@@ -610,7 +616,7 @@ export async function getDailyProgress(deviceId: string): Promise<DailyProgress>
     .eq("device_id", deviceId)
     .eq("day", today())
     .maybeSingle();
-  if (data) return data as DailyProgress;
+  if (data) return { ...(data as DailyProgress), minutes_practiced: saneMinutes(data.minutes_practiced) };
 
   const learner = await ensureLearner(deviceId);
   const { data: created, error } = await supabase
@@ -628,7 +634,7 @@ export async function logSession(deviceId: string, minutes: number, itemsComplet
   await supabase
     .from("daily_progress")
     .update({
-      minutes_practiced: Number(progress.minutes_practiced) + minutes,
+      minutes_practiced: saneMinutes(progress.minutes_practiced) + saneMinutes(minutes),
       items_completed: progress.items_completed + itemsCompleted,
     })
     .eq("id", progress.id);
