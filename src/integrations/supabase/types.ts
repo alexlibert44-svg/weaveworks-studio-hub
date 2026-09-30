@@ -44,6 +44,7 @@ export type Database = {
       learners: {
         Row: {
           audio_autoplay: boolean
+          avatar_path: string | null
           created_at: string
           daily_goal_minutes: number
           device_id: string
@@ -57,6 +58,7 @@ export type Database = {
         }
         Insert: {
           audio_autoplay?: boolean
+          avatar_path?: string | null
           created_at?: string
           daily_goal_minutes?: number
           device_id?: string
@@ -70,6 +72,7 @@ export type Database = {
         }
         Update: {
           audio_autoplay?: boolean
+          avatar_path?: string | null
           created_at?: string
           daily_goal_minutes?: number
           device_id?: string

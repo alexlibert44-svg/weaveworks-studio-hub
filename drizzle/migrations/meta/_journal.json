@@ -22,6 +22,13 @@
       "when": 1790794863296,
       "tag": "0002_adaptive_review_scheduling",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790799275810,
+      "tag": "0003_learner_avatars",
+      "breakpoints": true
     }
   ]
 }
