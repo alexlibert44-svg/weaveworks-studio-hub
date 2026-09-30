@@ -45,7 +45,7 @@ function FormDetail() {
   return (
     <AppShell>
       <Button asChild variant="ghost" size="icon" aria-label={t("word.backToSet")}>
-        <Link to="/sets/$setId" params={{ setId }}>
+        <Link to="/sets/$setId" params={{ setId }} search={{ tab: "forms" }}>
           <ArrowLeft className="size-5 rtl:rotate-180" />
         </Link>
       </Button>
