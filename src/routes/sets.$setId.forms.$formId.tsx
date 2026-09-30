@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Play, Volume2 } from "lucide-react";
+import { ArrowLeft, Lightbulb, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { speechLocale } from "@/lib/i18n/languages";
 import { getForm } from "@/lib/verba/api";
 import { FORM_SKILLS, unitProgress, unitState } from "@/lib/verba/progress";
-import { speak } from "@/lib/verba/speech";
+import { SpeakButton } from "@/components/verba/SpeakButton";
 import { SKILL_KEY } from "@/lib/verba/types";
 
 export const Route = createFileRoute("/sets/$setId/forms/$formId")({
@@ -67,10 +67,22 @@ function FormDetail() {
             {t(form.is_regular ? "form.regular" : "form.irregular")}
           </p>
         ) : null}
-        <Button variant="secondary" className="mt-4 rounded-xl" onClick={() => speak(form.text, locale)}>
-          <Volume2 className="size-4" /> {t("common.listen")}
-        </Button>
+        <SpeakButton variant="secondary" className="mt-4 rounded-xl" text={form.text} locale={locale} label={t("common.listen")} />
       </div>
+
+      {form.explanation ? (
+        <section
+          aria-labelledby="form-why"
+          className="mt-4 rounded-3xl border border-primary/15 bg-primary-soft p-5"
+        >
+          <p id="form-why" className="flex items-center gap-2 text-xs font-bold tracking-wide text-primary-deep uppercase">
+            <Lightbulb className="size-4" /> {t("form.why")}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground" dir="auto">
+            {form.explanation}
+          </p>
+        </section>
+      ) : null}
 
       <div className="card-surface mt-4 p-5">
         <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
@@ -78,15 +90,6 @@ function FormDetail() {
         </p>
         <p className="mt-1 text-base font-semibold">{form.translation}</p>
       </div>
-
-      {form.explanation ? (
-        <div className="card-surface mt-3 p-5">
-          <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
-            {t("form.why")}
-          </p>
-          <p className="mt-1 text-sm">{form.explanation}</p>
-        </div>
-      ) : null}
 
       {form.example ? (
         <div className="card-surface mt-3 p-5">
@@ -97,9 +100,7 @@ function FormDetail() {
             {form.example}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{form.example_translation}</p>
-          <Button variant="ghost" size="sm" className="mt-2 rounded-xl px-2" onClick={() => speak(form.example ?? "", locale)}>
-            <Volume2 className="size-4" /> {t("common.listen")}
-          </Button>
+          <SpeakButton variant="ghost" size="sm" className="mt-2 rounded-xl px-2" text={form.example} locale={locale} label={t("common.listen")} />
         </div>
       ) : null}
 

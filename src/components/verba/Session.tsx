@@ -703,7 +703,7 @@ function WriteStep({
 
       <div className="card-surface animate-rise mt-4 p-6">
         {/* The writing task, always in the target language; tap a word for its meaning. */}
-        {task && sentence && !sentence.id.startsWith("form-") ? (
+        {task && sentence ? (
           <TappableSentence text={task} sentence={sentence} locale={locale} />
         ) : (
           <p className="text-lg leading-relaxed font-semibold" lang={locale} dir="auto">
