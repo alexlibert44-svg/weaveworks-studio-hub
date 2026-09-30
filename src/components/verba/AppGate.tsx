@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useRouterState } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { I18nProvider } from "@/lib/i18n";
@@ -20,7 +20,10 @@ interface LearnerValue {
   refresh: () => void;
 }
 
-const LearnerContext = createContext<LearnerValue | null>(null);
+// Kept on globalThis so a hot reload of this file never splits providers and
+// consumers across two different context objects.
+const g = globalThis as { __lingoflowLearnerContext?: React.Context<LearnerValue | null> };
+const LearnerContext = (g.__lingoflowLearnerContext ??= createContext<LearnerValue | null>(null));
 
 export function useLearner(): LearnerValue {
   const value = useContext(LearnerContext);
@@ -54,6 +57,8 @@ export function AppGate({ children }: { children: ReactNode }) {
   // Decide from the match <Outlet /> is actually rendering, not the pending URL.
   const routeId = useRouterState({ select: (s) => s.matches[s.matches.length - 1]?.routeId ?? "" });
   const pathname = useRouterState({ select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname });
+  // Where the router is heading; during a sign-in redirect this is already "/".
+  const nextPath = useRouterState({ select: (s) => s.location.pathname });
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [guestLang, setGuestLang] = useState("en");
@@ -122,7 +127,7 @@ export function AppGate({ children }: { children: ReactNode }) {
     });
   }, [learnerFailed]);
 
-  const isPublic = PUBLIC_PATHS.includes(routeId) && PUBLIC_PATHS.includes(pathname);
+  const isPublic = PUBLIC_PATHS.includes(routeId) && PUBLIC_PATHS.includes(pathname) && PUBLIC_PATHS.includes(nextPath);
 
   if (session === undefined) return <Splash />;
 
