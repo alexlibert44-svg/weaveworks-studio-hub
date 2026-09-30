@@ -136,6 +136,15 @@ function PracticePage() {
         if (word) void queryClient.invalidateQueries({ queryKey: ["word", word] });
         if (form) void queryClient.invalidateQueries({ queryKey: ["form", form] });
       }}
+      onExit={
+        word && setId
+          ? () => {
+              void queryClient.invalidateQueries({ queryKey: ["word", word] });
+              void queryClient.invalidateQueries({ queryKey: ["set", setId] });
+              void navigate({ to: "/sets/$setId/words/$wordId", params: { setId, wordId: word } });
+            }
+          : undefined
+      }
       onRestart={() => {
         void refetch();
       }}

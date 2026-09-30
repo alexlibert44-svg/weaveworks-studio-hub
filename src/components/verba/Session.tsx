@@ -86,6 +86,8 @@ interface SessionProps {
   locale: string;
   onFinished: () => void;
   onRestart?: () => void;
+  /** When set, exit/finish return here instead of the sets list. */
+  onExit?: () => void;
 }
 
 export function Session({
@@ -95,7 +97,10 @@ export function Session({
   locale,
   onFinished,
   onRestart,
+  onExit,
 }: SessionProps) {
+  /** One training session id per mount/restart, stored with every graded attempt. */
+  const sessionId = useRef<string>(crypto.randomUUID());
   const { t } = useI18n();
   const units = useMemo(() => buildUnits(exercises), [exercises]);
   const [attempt, setAttempt] = useState(0);
@@ -118,7 +123,7 @@ export function Session({
     (skill: Skill, score: number, response: string | null) => {
       if (!unit) return;
       const item = unit.items[skill] ?? unit.fallbackItem;
-      void recordAttempt(deviceId, item, score, response).catch(() => undefined);
+      void recordAttempt(deviceId, item, score, response, sessionId.current).catch(() => undefined);
     },
     [deviceId, unit],
   );
@@ -149,6 +154,7 @@ export function Session({
     setStep("recognition");
     setDone(false);
     startedAt.current = Date.now();
+    sessionId.current = crypto.randomUUID();
     setAttempt((value) => value + 1);
     onRestart?.();
   };
@@ -178,9 +184,15 @@ export function Session({
         <Button size="lg" className="mt-6 w-full rounded-2xl" onClick={restart}>
           <RotateCcw className="size-4" /> {t("train.restart")}
         </Button>
-        <Button asChild size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl">
-          <Link to="/sets">{t("train.exit")}</Link>
-        </Button>
+        {onExit ? (
+          <Button size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl" onClick={onExit}>
+            {t("train.exit")}
+          </Button>
+        ) : (
+          <Button asChild size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl">
+            <Link to="/sets">{t("train.exit")}</Link>
+          </Button>
+        )}
       </div>
     );
   }
@@ -198,11 +210,17 @@ export function Session({
           <span className="text-sm font-bold text-primary">
             {t("practice.progress", { current: index + 1, total })}
           </span>
-          <Button asChild variant="ghost" size="icon" aria-label={t("train.exit")}>
-            <Link to="/sets">
+          {onExit ? (
+            <Button variant="ghost" size="icon" aria-label={t("train.exit")} onClick={onExit}>
               <X className="size-5" />
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="icon" aria-label={t("train.exit")}>
+              <Link to="/sets">
+                <X className="size-5" />
+              </Link>
+            </Button>
+          )}
         </div>
         <MasteryBar value={progress} className="mt-3" />
       </header>
@@ -224,7 +242,8 @@ export function Session({
           locale={locale}
           deviceId={deviceId}
           onDone={(score, note) => {
-            record("speaking", score, note);
+            // No recording means no assessment: nothing is stored for pronunciation.
+            if (note !== "mic-denied") record("speaking", score, note);
             next();
           }}
         />
