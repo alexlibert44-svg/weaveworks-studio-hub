@@ -149,7 +149,12 @@ export function AppGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!session) return <Navigate to="/auth" replace />;
+  if (!session) {
+    // Already heading to a public page: wait for it instead of re-issuing the
+    // redirect on every render (which froze the browser in an endless loop).
+    if (PUBLIC_PATHS.includes(nextPath)) return <Splash />;
+    return <Navigate to="/auth" replace />;
+  }
   if (!learner || !value) {
     if (learnerFailed || learnerSlow) {
       return (
