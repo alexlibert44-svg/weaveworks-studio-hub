@@ -48,3 +48,72 @@ export function unitState(skillItems: LearningItem[], required: Skill[]): Master
   if (unitMastered(skillItems, required)) return "mastered";
   return "learning";
 }
+
+/* --------------------------- attempt-based mastery -------------------------- */
+
+/** One stored graded attempt (practice_attempts row) for a word's skill. */
+export interface SkillAttempt {
+  learning_item_id: string;
+  skill: Skill;
+  is_correct: boolean;
+  score: number | null;
+  response: string | null;
+  created_at: string;
+}
+
+/** Mastery rule for each required skill, evaluated independently. */
+export const MASTERY_RULE = { successes: 5, latest: 5, sessions: 3 } as const;
+
+const SESSION_PREFIX = /^\[s:([^\]]+)\]\s?/;
+
+/** Tags a stored response with the training session it belongs to. */
+export function tagResponse(sessionId: string, response: string | null): string {
+  return `[s:${sessionId}] ${response ?? ""}`.trimEnd();
+}
+
+/** Session key of an attempt. Older attempts stored before session tagging fall back to their day. */
+export function attemptSession(a: SkillAttempt): string {
+  const m = a.response ? SESSION_PREFIX.exec(a.response) : null;
+  return m ? m[1] : `day:${a.created_at.slice(0, 10)}`;
+}
+
+export function stripSessionTag(response: string | null): string | null {
+  return response ? response.replace(SESSION_PREFIX, "") : response;
+}
+
+export interface SkillMastery {
+  skill: Skill;
+  attempts: number;
+  successes: number;
+  sessions: number;
+  mastered: boolean;
+}
+
+/** Applies the exact mastery rule to one skill's stored attempt history. */
+export function skillMastery(skill: Skill, attempts: SkillAttempt[]): SkillMastery {
+  const own = attempts
+    .filter((a) => a.skill === skill)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const successes = own.filter((a) => a.is_correct).length;
+  const latest = own.slice(0, MASTERY_RULE.latest);
+  const latestSessions = new Set(latest.map(attemptSession)).size;
+  const mastered =
+    successes >= MASTERY_RULE.successes &&
+    latest.length === MASTERY_RULE.latest &&
+    latest.every((a) => a.is_correct) &&
+    latestSessions >= MASTERY_RULE.sessions;
+  return {
+    skill,
+    attempts: own.length,
+    successes,
+    sessions: new Set(own.map(attemptSession)).size,
+    mastered,
+  };
+}
+
+/** New = no graded attempt in any required skill; Mastered = every required skill meets the rule. */
+export function wordStatus(attempts: SkillAttempt[], required: Skill[] = UNIT_SKILLS): MasteryState {
+  const relevant = attempts.filter((a) => required.includes(a.skill));
+  if (relevant.length === 0) return "new";
+  return required.every((s) => skillMastery(s, relevant).mastered) ? "mastered" : "learning";
+}
