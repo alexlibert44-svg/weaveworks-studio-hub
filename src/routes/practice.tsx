@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ function PracticePage() {
   const { deviceId } = useLearner();
   const { t, targetSpeech } = useI18n();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const filters = {
     setId: setId ?? null,
