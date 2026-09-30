@@ -11,25 +11,33 @@ import type { Sentence } from "@/lib/verba/types";
 const clean = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, "");
 
 /**
- * The target-language exercise sentence with every word tappable. A tap shows
- * that word's meaning in context, in the learner's language, in a small
- * bubble. The blank (the answer) is never tappable and nothing else is revealed.
+ * The learner's-language translation with every word tappable. A tap shows the
+ * matching target-language word(s) in context, in a small bubble. A match that
+ * would give away the writing answer is withheld; nothing else is revealed.
  */
 export function TappableSentence({
   text,
   sentence,
   locale,
+  hidden,
 }: {
   text: string;
   sentence: Sentence;
+  /** Target-language speech locale. */
   locale: string;
+  /** The writing answer: never shown. */
+  hidden?: string | null;
 }) {
   const { t, native } = useI18n();
   const glossFn = useServerFn(getWordGlosses);
   const [open, setOpen] = useState<number | null>(null);
-  const [glosses, setGlosses] = useState<WordGloss[] | null>(
-    (sentence as Sentence & { word_glosses?: WordGloss[] | null }).word_glosses ?? null,
-  );
+  const [glosses, setGlosses] = useState<WordGloss[] | null>(() => {
+    const saved = (sentence as Sentence & { word_glosses?: unknown }).word_glosses as
+      | { v?: number; words?: WordGloss[] }
+      | null
+      | undefined;
+    return saved && saved.v === 2 && Array.isArray(saved.words) ? saved.words : null;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -67,17 +75,17 @@ export function TappableSentence({
   const meaningFor = (tokenIndex: number): string | null => {
     if (!glosses) return null;
     const word = clean(tokens[tokenIndex] ?? "");
-    const wordPos = tokens.slice(0, tokenIndex).filter((x) => x.trim() && !x.includes("____")).length;
+    const wordPos = tokens.slice(0, tokenIndex).filter((x) => x.trim() && clean(x)).length;
     const matches = glosses.filter((g) => clean(g.word) === word);
     if (matches.length === 0) return null;
     // Prefer the gloss at the same position when a word repeats.
     const byPos = glosses[wordPos];
-    return (byPos && clean(byPos.word) === word ? byPos : matches[0])!.meaning;
+    return (byPos && clean(byPos.word) === word ? byPos : matches[0])!.meaning ?? null;
   };
 
   return (
     <div ref={ref}>
-      <p className="text-lg leading-loose font-semibold" lang={locale} dir="auto">
+      <p className="text-base leading-loose font-medium text-muted-foreground" lang={native.code} dir="auto">
         {tokens.map((token, index) => {
           if (!token.trim() || token.includes("____") || !clean(token)) {
             return <span key={index}>{token}</span>;
@@ -102,7 +110,6 @@ export function TappableSentence({
               {active ? (
                 <span
                   role="status"
-                  lang={native.code}
                   className="absolute start-0 top-full z-20 mt-1 w-max max-w-[14rem] rounded-xl border border-border bg-popover px-3 py-1.5 text-sm font-semibold whitespace-normal text-primary-deep shadow-card"
                 >
                   {loading ? (
@@ -112,7 +119,12 @@ export function TappableSentence({
                       {t("audio.retry")}
                     </button>
                   ) : (
-                    (meaningFor(index) ?? t("train.noMeaning"))
+                    (() => {
+                      const match = meaningFor(index);
+                      if (!match) return t("train.noMeaning");
+                      if (hidden && clean(match).includes(clean(hidden))) return t("train.answerHidden");
+                      return <span lang={locale.split("-")[0]} dir="auto">{match}</span>;
+                    })()
                   )}
                 </span>
               ) : null}

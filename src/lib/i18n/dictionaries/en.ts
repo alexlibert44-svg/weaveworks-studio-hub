@@ -240,7 +240,7 @@ export const en = {
   "train.pronMissed": "Needs practice",
   "train.pronFailed": "Speech analysis failed. Please try again.",
   "train.writeSentenceHint": "Write the whole sentence in the language you are learning.",
-  "train.tapForHint": "Tap any word to see its meaning here.",
+  "train.tapForHint": "Tap a word in the translation to see it in the language you're learning.",
   "train.writeMissing": "Missing words",
   "train.writeExtra": "Extra words",
   "word.skillWriting": "Writing",
@@ -318,6 +318,9 @@ export const en = {
   "audio.retry": "Audio failed — retry",
   "train.showTranslation": "Show translation",
   "train.noMeaning": "No meaning found",
+  "sets.totalItems": "{count} items in total",
+  "sets.splitCounts": "Original words: {words} · Tenses & forms: {forms}",
+  "train.answerHidden": "That's the word you're writing",
 } as const;
 
 export type MessageKey = keyof typeof en;

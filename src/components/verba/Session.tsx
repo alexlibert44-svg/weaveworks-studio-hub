@@ -8,6 +8,7 @@ import {
   Play,
   RotateCcw,
   X,
+  Lightbulb,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
