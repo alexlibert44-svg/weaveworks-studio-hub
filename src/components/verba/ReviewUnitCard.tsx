@@ -25,7 +25,7 @@ export function ReviewUnitCard({ unit, now }: { unit: ReviewUnit; now: Date }) {
           <span
             className={cn(
               "rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
-              unit.kind === "words" ? "bg-primary-soft text-primary-deep" : "bg-info-soft text-info-foreground",
+              unit.kind === "words" ? "bg-primary-soft text-primary-deep" : "bg-accent-soft text-accent-foreground",
             )}
           >
             {typeLabel}
