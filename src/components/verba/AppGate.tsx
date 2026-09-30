@@ -51,7 +51,10 @@ function browserLanguage(): string {
  * renders. Signed-out visitors only see the sign-in and password pages.
  */
 export function AppGate({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The resolved location matches what <Outlet /> is actually rendering during transitions.
+  const pathname = useRouterState({
+    select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname,
+  });
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [guestLang, setGuestLang] = useState("en");
