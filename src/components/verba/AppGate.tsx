@@ -53,6 +53,7 @@ function browserLanguage(): string {
 export function AppGate({ children }: { children: ReactNode }) {
   // Decide from the match <Outlet /> is actually rendering, not the pending URL.
   const routeId = useRouterState({ select: (s) => s.matches[s.matches.length - 1]?.routeId ?? "" });
+  const pathname = useRouterState({ select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname });
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [guestLang, setGuestLang] = useState("en");
@@ -79,30 +80,34 @@ export function AppGate({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  const isPublic = PUBLIC_PATHS.includes(routeId);
+  const isPublic = PUBLIC_PATHS.includes(routeId) && PUBLIC_PATHS.includes(pathname);
 
   if (session === undefined) return <Splash />;
 
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["learner", userId] });
+  };
+  const value: LearnerValue | null =
+    session && learner
+      ? { deviceId: session.user.id, email: session.user.email ?? null, learner, refresh }
+      : null;
+
   if (isPublic) {
+    // Right after sign-in the app screen can render before the route id
+    // updates, so still provide the learner whenever one exists.
     return (
       <I18nProvider nativeCode={learner?.native_language ?? guestLang} targetCode={learner?.learning_language ?? "en"}>
-        {children}
+        <LearnerContext.Provider value={value}>{children}</LearnerContext.Provider>
       </I18nProvider>
     );
   }
 
   if (!session) return <Navigate to="/auth" replace />;
-  if (!learner) return <Splash />;
-
-  const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ["learner", userId] });
-  };
+  if (!learner || !value) return <Splash />;
 
   return (
     <I18nProvider nativeCode={learner.native_language} targetCode={learner.learning_language}>
-      <LearnerContext.Provider
-        value={{ deviceId: session.user.id, email: session.user.email ?? null, learner, refresh }}
-      >
+      <LearnerContext.Provider value={value}>
         {learner.onboarding_completed ? children : <Onboarding />}
       </LearnerContext.Provider>
     </I18nProvider>
