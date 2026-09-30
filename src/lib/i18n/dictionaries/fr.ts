@@ -241,7 +241,7 @@ export const fr: Dictionary = {
   "train.pronMissed": "À travailler",
   "train.pronFailed": "L'analyse de la prononciation a échoué. Réessayez.",
   "train.writeSentenceHint": "Écrivez toute la phrase dans la langue apprise.",
-  "train.tapForHint": "Touchez un mot pour voir son sens.",
+  "train.tapForHint": "Touchez un mot de la traduction pour le voir dans la langue apprise.",
   "train.writeMissing": "Mots manquants",
   "train.writeExtra": "Mots en trop",
   "word.skillWriting": "Écriture",
@@ -319,4 +319,7 @@ export const fr: Dictionary = {
   "audio.retry": "Échec audio — réessayer",
   "train.showTranslation": "Afficher la traduction",
   "train.noMeaning": "Sens introuvable",
+  "sets.totalItems": "{count} éléments au total",
+  "sets.splitCounts": "Mots d'origine : {words} · Temps et formes : {forms}",
+  "train.answerHidden": "C'est le mot à écrire",
 };

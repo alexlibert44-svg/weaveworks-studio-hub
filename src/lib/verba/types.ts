@@ -41,6 +41,10 @@ export interface Word {
   position: number;
   /** Only on derived-form units used inside a session: how the form was built. */
   explanation?: string | null;
+  /** Derived-form units only: grammatical label, parent word and saved AI explanation. */
+  form_label?: string | null;
+  form_parent?: string | null;
+  form_explanation?: string | null;
 }
 
 export interface Sentence {
@@ -103,6 +107,8 @@ export interface DailyProgress {
 
 export interface SetSummary extends WordSet {
   wordCount: number;
+  /** Saved Derived Forms whose Original Word still exists. */
+  formCount: number;
   /** Real status derived from stored per-word results. */
   status: MasteryState;
 }

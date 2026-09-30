@@ -8,6 +8,7 @@ import {
   Play,
   RotateCcw,
   X,
+  Lightbulb,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -358,12 +359,12 @@ function RecognitionStep({
         <p className="mt-3 text-base font-semibold text-primary">
           {word.translation ?? word.meaning}
         </p>
-        {word.explanation ? (
+        {word.explanation && !word.form_label ? (
           <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-muted-foreground">
             {word.explanation}
           </p>
         ) : null}
-        {word.part_of_speech ? (
+        {word.part_of_speech && !word.form_label ? (
           <p className="mt-1 text-xs text-muted-foreground">
             {posLabel(t as never, word.part_of_speech)}
             {word.alternative_parts_of_speech?.length
@@ -383,6 +384,24 @@ function RecognitionStep({
         ) : null}
         <AudioButtons word={word.text} sentence={sentence?.text ?? null} locale={locale} />
       </div>
+      {word.form_label ? (
+        <section
+          aria-label={t("form.why")}
+          className="animate-rise mt-4 rounded-3xl border border-primary/15 bg-primary-soft p-5"
+        >
+          <p className="flex items-center gap-2 text-xs font-bold tracking-wide text-primary-deep uppercase">
+            <Lightbulb className="size-4" /> {t("form.why")}
+          </p>
+          <p className="mt-2 text-sm font-semibold text-primary-deep">
+            {t("form.of", { label: word.form_label, word: word.form_parent ?? "" })}
+          </p>
+          {word.form_explanation ? (
+            <p className="mt-1 text-sm leading-relaxed text-foreground" dir="auto">
+              {word.form_explanation}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
       <p className="mt-4 text-center text-sm text-muted-foreground">{t("practice.newWordBody")}</p>
       <Button size="lg" className="mt-auto w-full rounded-2xl" onClick={onReady}>
         {t("train.ready")} <ArrowRight className="size-4 rtl:rotate-180" />
@@ -656,7 +675,6 @@ function WriteStep({
   const [score, setScore] = useState<number | null>(null);
   const [retry, setRetry] = useState(false);
   const [tries, setTries] = useState(0);
-  const [showSupport, setShowSupport] = useState(false);
   const [feedback, setFeedback] = useState<{ missing: string[]; extra: string[] }>({
     missing: [],
     extra: [],
@@ -701,28 +719,25 @@ function WriteStep({
       </p>
 
       <div className="card-surface animate-rise mt-4 p-6">
-        {/* The writing task, always in the target language; tap a word for its meaning. */}
-        {task && sentence ? (
-          <TappableSentence text={task} sentence={sentence} locale={locale} />
-        ) : (
-          <p className="text-lg leading-relaxed font-semibold" lang={locale} dir="auto">
-            {task ?? (word.translation ?? word.meaning ?? word.text)}
-          </p>
-        )}
+        {/* The writing task, always in the target language. */}
+        <p className="text-lg leading-relaxed font-semibold" lang={locale} dir="auto">
+          {task ?? (word.translation ?? word.meaning ?? word.text)}
+        </p>
 
-        {/* Full translation stays hidden until the learner asks for it. */}
-        {support && task ? (
+        {/* The translation stays visible; tapping a word shows its target-language match. */}
+        {support && task && sentence?.translation ? (
           <div className="mt-4 border-t border-border pt-3">
-            {showSupport ? (
-              <p className="text-base leading-relaxed font-medium text-muted-foreground" dir="auto">
-                {support}
-              </p>
-            ) : (
-              <Button variant="ghost" size="sm" className="rounded-xl px-2" onClick={() => setShowSupport(true)}>
-                {t("train.showTranslation")}
-              </Button>
-            )}
+            <TappableSentence
+              text={sentence.translation}
+              sentence={sentence}
+              locale={locale}
+              hidden={blanked ? word.text : null}
+            />
           </div>
+        ) : support && task ? (
+          <p className="mt-4 border-t border-border pt-3 text-base leading-relaxed font-medium text-muted-foreground" dir="auto">
+            {support}
+          </p>
         ) : null}
       </div>
 

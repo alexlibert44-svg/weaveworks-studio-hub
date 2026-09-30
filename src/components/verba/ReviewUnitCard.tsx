@@ -20,7 +20,9 @@ export function ReviewUnitCard({ unit, now }: { unit: ReviewUnit; now: Date }) {
   const inner = (
     <>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold">{unit.name}</p>
+        <p className="truncate text-sm font-bold">
+          {unit.name} <span className="font-semibold text-muted-foreground">({unit.total})</span>
+        </p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span
             className={cn(

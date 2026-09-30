@@ -74,10 +74,13 @@ function SetsPage() {
                     <p className="truncate text-base font-bold">{set.name}</p>
                     <div className="mt-1.5 flex items-center gap-2">
                       <StatePill state={set.status} />
-                      <span className="text-xs text-muted-foreground">
-                        {t("sets.wordCount", { count: set.wordCount })}
+                      <span className="text-xs font-semibold text-primary">
+                        {t("sets.totalItems", { count: set.wordCount + set.formCount })}
                       </span>
                     </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("sets.splitCounts", { words: set.wordCount, forms: set.formCount })}
+                    </p>
                   </div>
                   <ChevronRight className="size-5 shrink-0 text-muted-foreground rtl:rotate-180" />
                 </div>

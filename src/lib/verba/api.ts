@@ -114,6 +114,10 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
     supabase.from("words").select("id, set_id"),
     supabase.from("learning_items").select("*").eq("device_id", deviceId),
   ]);
+  const { data: formRows } = await supabase
+    .from("word_forms")
+    .select("id, set_id, word_id")
+    .eq("device_id", deviceId);
   if (error) throw error;
 
   const attemptsByWord = await wordAttemptsByWord((items ?? []) as LearningItem[]);
@@ -127,7 +131,11 @@ export async function listSets(deviceId: string): Promise<SetSummary[]> {
             setWords.every((w) => wordStatus(attemptsByWord.get(w.id) ?? []) === "mastered")
           ? "mastered"
           : "learning";
-    return { ...(set as WordSet), wordCount: setWords.length, status };
+    const setWordIds = new Set(setWords.map((w) => w.id));
+    const formCount = new Set(
+      (formRows ?? []).filter((f) => f.set_id === set.id && setWordIds.has(f.word_id)).map((f) => f.id),
+    ).size;
+    return { ...(set as WordSet), wordCount: setWords.length, formCount, status };
   });
 }
 
@@ -497,6 +505,9 @@ export async function buildQueue(
           part_of_speech: original.part_of_speech,
           alternative_parts_of_speech: [],
           explanation: `${form.form_label} · ${original.text}${form.explanation ? ` — ${form.explanation}` : ""}`,
+          form_label: form.form_label,
+          form_parent: original.text,
+          form_explanation: form.explanation,
         }
       : original;
     const wordSentences = ((sentences ?? []) as Sentence[]).filter(

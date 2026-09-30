@@ -40,6 +40,8 @@ export interface ReviewUnit {
   nextReviewAt: string | null;
   lastReviewedAt: string | null;
   session: ReviewSession | null;
+  /** Every item in the group (not only due ones). */
+  total: number;
 }
 
 interface SetScheduleRow {
@@ -66,12 +68,16 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
         .eq("device_id", deviceId)
         .order("created_at", { ascending: false }),
       supabase.from("review_sessions").select("*").eq("device_id", deviceId).eq("status", "active"),
-      supabase.from("words").select("set_id"),
-      supabase.from("word_forms").select("set_id").eq("device_id", deviceId),
+      supabase.from("words").select("id, set_id"),
+      supabase.from("word_forms").select("id, set_id, word_id").eq("device_id", deviceId),
     ]);
   if (error) throw error;
   const withWords = new Set((words ?? []).map((w) => w.set_id));
-  const withForms = new Set((forms ?? []).map((f) => f.set_id));
+  const wordIds = new Set((words ?? []).map((w) => w.id));
+  const validForms = (forms ?? []).filter((f) => wordIds.has(f.word_id));
+  const withForms = new Set(validForms.map((f) => f.set_id));
+  const countOf = (rows: { set_id: string }[], setId: string) =>
+    rows.filter((r) => r.set_id === setId).length;
   const active = (sessions ?? []) as unknown as ReviewSession[];
   const sessionFor = (setId: string, kind: ReviewKind) =>
     active.find((s) => s.set_id === setId && s.kind === kind) ?? null;
@@ -88,6 +94,7 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
         nextReviewAt: set.next_review_at,
         lastReviewedAt: set.last_reviewed_at,
         session: sessionFor(set.id, "words"),
+        total: countOf(words ?? [], set.id),
       });
     }
     if (set.forms_generated_at && withForms.has(set.id)) {
@@ -100,6 +107,7 @@ export async function listReviewUnits(deviceId: string): Promise<ReviewUnit[]> {
         nextReviewAt: set.forms_next_review_at,
         lastReviewedAt: set.forms_last_reviewed_at,
         session: sessionFor(set.id, "forms"),
+        total: countOf(validForms, set.id),
       });
     }
   }
@@ -239,6 +247,9 @@ export async function buildReviewSequence(setId: string, kind: ReviewKind): Prom
       pronunciation: form.pronunciation,
       alternative_parts_of_speech: [],
       explanation: `${form.form_label} · ${original.text}${form.explanation ? ` — ${form.explanation}` : ""}`,
+      form_label: form.form_label,
+      form_parent: original.text,
+      form_explanation: form.explanation,
     };
     for (const item of formItems) exercises.push({ item, word, sentence, skill: item.skill });
   }
