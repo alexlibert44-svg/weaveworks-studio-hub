@@ -65,7 +65,7 @@ export const Route = createFileRoute("/practice")({
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center px-6 text-center" role="alert">
       <div>
-        <p className="text-sm text-muted-foreground">{error.message}</p>
+        <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
         <Button asChild className="mt-4 rounded-xl">
           <Link to="/">Home</Link>
         </Button>

@@ -8,18 +8,18 @@ interface State {
 
 /** Last-resort boundary: any render crash shows a helpful screen, never a blank page. */
 export class AppErrorBoundary extends Component<{ children: ReactNode }, State> {
-  state: State = { error: null };
+  override state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(error, info.componentStack);
     reportLovableError(error, { boundary: "app_error_boundary" });
   }
 
-  render() {
+  override render() {
     if (!this.state.error) return this.props.children;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6" role="alert">
