@@ -45,7 +45,8 @@ function ProfilePage() {
     enabled: !!avatarPath,
     staleTime: 50 * 60 * 1000,
     queryFn: async () => {
-      const { data, error } = await supabase.storage.from("avatars").createSignedUrl(avatarPath!, 3600);
+      if (!avatarPath) return null;
+      const { data, error } = await supabase.storage.from("avatars").createSignedUrl(avatarPath, 3600);
       if (error) throw error;
       return data.signedUrl;
     },
@@ -86,11 +87,11 @@ function ProfilePage() {
         </header>
         <div className="mt-5 flex flex-col items-center text-center">
           <div className="relative">
-            <div className="grid size-20 place-items-center overflow-hidden rounded-full bg-hero-foreground/15 text-hero-foreground ring-2 ring-hero-foreground/45 shadow-card">
+            <div className="grid size-28 place-items-center overflow-hidden rounded-full bg-hero-foreground/15 text-hero-foreground ring-2 ring-hero-foreground/60 shadow-card sm:size-32">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={learner.display_name} className="size-full object-cover" />
               ) : (
-                <User className="size-9" />
+                <User className="size-12" />
               )}
             </div>
             {editing ? (
@@ -138,7 +139,7 @@ function ProfilePage() {
           ) : (
             <>
               <p className="mt-3 max-w-full break-words text-xl font-semibold text-hero-foreground">{learner.display_name}</p>
-              <Button variant="ghost" size="sm" className="mt-2 text-hero-foreground hover:bg-hero-foreground/15 hover:text-hero-foreground" onClick={() => setEditing(true)}>
+              <Button variant="secondary" size="sm" className="mt-3 min-h-11 px-5 shadow-card" onClick={() => setEditing(true)}>
                 <Pencil className="size-3.5" /> {t("profile.edit")}
               </Button>
             </>
