@@ -137,6 +137,30 @@ export const es: Dictionary = {
   "review.next": "Próximo repaso",
 
   "profile.title": "Perfil",
+
+  "settings.title": "Ajustes",
+
+  "settings.account": "Cuenta",
+
+  "settings.editProfile": "Editar nombre y foto",
+
+  "settings.learning": "Aprendizaje",
+
+  "settings.audio": "Audio",
+
+  "settings.notifications": "Notificaciones",
+
+  "settings.audioHint": "Reproducir la palabra automáticamente cuando aparece una nueva.",
+
+  "profile.edit": "Editar perfil",
+
+  "profile.changePhoto": "Cambiar foto",
+
+  "profile.photoError": "No se pudo guardar la foto. Inténtalo de nuevo.",
+
+  "profile.statLearning": "Aprendiendo",
+
+  "profile.openSettings": "Ajustes",
   "profile.languages": "Idiomas",
   "profile.native": "Hablo",
   "profile.target": "Estoy aprendiendo",

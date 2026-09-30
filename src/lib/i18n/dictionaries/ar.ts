@@ -137,6 +137,30 @@ export const ar: Dictionary = {
   "review.next": "المراجعة القادمة",
 
   "profile.title": "حسابي",
+
+  "settings.title": "الإعدادات",
+
+  "settings.account": "الحساب",
+
+  "settings.editProfile": "تعديل الاسم والصورة",
+
+  "settings.learning": "التعلّم",
+
+  "settings.audio": "الصوت",
+
+  "settings.notifications": "الإشعارات",
+
+  "settings.audioHint": "تشغيل نطق الكلمة تلقائيًا عند ظهور كلمة جديدة.",
+
+  "profile.edit": "تعديل الملف الشخصي",
+
+  "profile.changePhoto": "تغيير الصورة",
+
+  "profile.photoError": "تعذّر حفظ الصورة. حاول مرة أخرى.",
+
+  "profile.statLearning": "قيد التعلّم",
+
+  "profile.openSettings": "الإعدادات",
   "profile.languages": "اللغات",
   "profile.native": "أتحدّث",
   "profile.target": "أتعلّم",

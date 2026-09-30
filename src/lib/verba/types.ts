@@ -94,6 +94,8 @@ export interface Learner {
   notifications_enabled: boolean;
   audio_autoplay: boolean;
   onboarding_completed: boolean;
+  /** Storage path of the profile picture in the private avatars bucket. */
+  avatar_path?: string | null;
 }
 
 export interface DailyProgress {
