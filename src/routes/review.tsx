@@ -27,6 +27,8 @@ export const Route = createFileRoute("/review")({
         property: "og:description",
         content: "What's due today, broken down by writing, speaking, recall and forms.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReviewPage,

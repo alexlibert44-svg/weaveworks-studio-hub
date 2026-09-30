@@ -36,6 +36,8 @@ export const Route = createFileRoute("/sets/$setId/")({
         property: "og:description",
         content: "Train each word or form individually and track real progress.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SetDetail,

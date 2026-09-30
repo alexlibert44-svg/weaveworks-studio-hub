@@ -25,6 +25,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Your words, turned into sentences, listening, writing, speaking and recall.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Home,

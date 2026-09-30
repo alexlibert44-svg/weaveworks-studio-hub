@@ -24,6 +24,8 @@ export const Route = createFileRoute("/sets/")({
         property: "og:description",
         content: "Browse the word sets you created and jump straight into practice.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SetsPage,

@@ -41,6 +41,8 @@ export const Route = createFileRoute("/sets/$setId/words/$wordId")({
         property: "og:description",
         content: "How well you know this word across writing, pronunciation and meaning.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: WordDetail,

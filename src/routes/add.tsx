@@ -26,6 +26,8 @@ export const Route = createFileRoute("/add")({
         property: "og:description",
         content: "Your words become sentences, listening, writing, speaking and recall practice.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AddPage,

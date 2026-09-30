@@ -47,6 +47,8 @@ export const Route = createFileRoute("/practice")({
         property: "og:description",
         content: "One objective at a time: writing, speaking, recall, variations and forms.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PracticePage,

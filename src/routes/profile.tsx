@@ -29,6 +29,8 @@ export const Route = createFileRoute("/profile")({
         property: "og:description",
         content: "Change your languages and daily goal, and see your real progress.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProfilePage,
