@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { AuthExpiredError, getFreshAccessToken, recoverSession } from "@/lib/verba/session-token";
 
 /**
  * Real audio playback. Words and sentences are synthesized once by the
@@ -18,15 +18,36 @@ function languageName(locale: string): string {
   }
 }
 
-async function synthesize(text: string, locale: string): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("signed-out");
-  const response = await fetch("/api/tts", {
+async function requestAudio(text: string, language: string, token: string): Promise<Response> {
+  return fetch("/api/tts", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-    body: JSON.stringify({ text, language: languageName(locale) }),
+    body: JSON.stringify({ text, language }),
   });
+}
+
+async function synthesize(text: string, locale: string): Promise<string> {
+  const language = languageName(locale);
+  let token = await getFreshAccessToken();
+  if (!token) {
+    // The saved sign-in can't be renewed: sign out so the app asks for a new one.
+    await recoverSession();
+    throw new AuthExpiredError();
+  }
+  let response = await requestAudio(text, language, token);
+  if (response.status === 401) {
+    // Token rejected mid-session: renew once and retry before giving up.
+    token = await getFreshAccessToken(true);
+    if (!token) {
+      await recoverSession();
+      throw new AuthExpiredError();
+    }
+    response = await requestAudio(text, language, token);
+    if (response.status === 401) {
+      await recoverSession();
+      throw new AuthExpiredError();
+    }
+  }
   if (!response.ok) throw new Error(`audio-${response.status}`);
   const blob = await response.blob();
   if (blob.size < 100) throw new Error("audio-empty");
