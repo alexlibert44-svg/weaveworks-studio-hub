@@ -212,10 +212,10 @@
 }
 
 @utility card-surface {
-  background: var(--gradient-surface);
+  background: var(--gradient-surface) padding-box, linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, white), color-mix(in srgb, var(--primary) 20%, white) 55%, color-mix(in srgb, var(--primary) 38%, white)) border-box;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-card);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border: 1px solid transparent;
 }
 
 @utility button-raised {

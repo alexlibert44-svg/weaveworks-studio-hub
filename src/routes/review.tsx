@@ -3,7 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppShell, PageTitle } from "@/components/verba/AppShell";
+import { AppShell } from "@/components/verba/AppShell";
 import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { ReviewUnitCard } from "@/components/verba/ReviewUnitCard";
