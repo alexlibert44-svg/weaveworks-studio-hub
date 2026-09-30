@@ -60,25 +60,55 @@ export function AppGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setGuestLang(browserLanguage());
+    let settled = false;
+    const settle = (next: Session | null) => {
+      settled = true;
+      setSession(next);
+    };
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       // The first event can fire before a sign-in returning from Google has
       // been read from the address bar; getSession() below waits for that.
       if (event === "INITIAL_SESSION") return;
-      setSession(next);
+      settle(next);
       if (event === "SIGNED_OUT") queryClient.clear();
       if (event === "SIGNED_IN" || event === "USER_UPDATED") void queryClient.invalidateQueries();
     });
-    void supabase.auth.getSession().then(({ data: current }) => setSession(current.session));
-    return () => data.subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(({ data: current }) => settle(current.session))
+      .catch((error) => {
+        console.error("Session check failed", error);
+        settle(null);
+      });
+    // Never hang on the splash: if the session check stalls, treat as signed out.
+    const timer = window.setTimeout(() => {
+      if (!settled) settle(null);
+    }, 3000);
+    return () => {
+      window.clearTimeout(timer);
+      data.subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   const userId = session?.user.id ?? null;
-  const { data: learner } = useQuery({
+  const {
+    data: learner,
+    isError: learnerFailed,
+    refetch: refetchLearner,
+  } = useQuery({
     queryKey: ["learner", userId],
     queryFn: () => ensureLearner(userId as string),
     enabled: Boolean(userId),
     staleTime: 60_000,
+    retry: 1,
   });
+  const [learnerSlow, setLearnerSlow] = useState(false);
+  useEffect(() => {
+    setLearnerSlow(false);
+    if (!userId || learner) return;
+    const timer = window.setTimeout(() => setLearnerSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [userId, learner]);
 
   const isPublic = PUBLIC_PATHS.includes(routeId) && PUBLIC_PATHS.includes(pathname);
 
@@ -103,7 +133,35 @@ export function AppGate({ children }: { children: ReactNode }) {
   }
 
   if (!session) return <Navigate to="/auth" replace />;
-  if (!learner || !value) return <Splash />;
+  if (!learner || !value) {
+    if (learnerFailed || learnerSlow) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            We couldn't load your account. Check your connection and try again.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setLearnerSlow(false);
+                void refetchLearner();
+              }}
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => void supabase.auth.signOut().finally(() => setSession(null))}
+              className="rounded-xl border border-input px-4 py-2 text-sm font-semibold"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return <Splash />;
+  }
 
   return (
     <I18nProvider nativeCode={learner.native_language} targetCode={learner.learning_language}>
