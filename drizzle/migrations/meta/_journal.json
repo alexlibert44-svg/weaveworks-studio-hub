@@ -8,6 +8,13 @@
       "when": 1790736403191,
       "tag": "0000_lingoflow_schema_auth_review",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790770382526,
+      "tag": "0001_sentence_word_glosses",
+      "breakpoints": true
     }
   ]
 }

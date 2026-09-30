@@ -1,0 +1,2 @@
+ALTER TABLE public.sentences ADD COLUMN IF NOT EXISTS word_glosses jsonb;
+COMMENT ON COLUMN public.sentences.word_glosses IS 'AI contextual meaning of each target-language word, in the learner native language; generated once on first tap and reused.';
