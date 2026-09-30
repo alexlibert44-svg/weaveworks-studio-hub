@@ -39,9 +39,24 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const authProblem = isAuthFailure(error);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+  useEffect(() => {
+    // An expired sign-in should send the learner to the sign-in page,
+    // never leave them on a crashed screen.
+    if (!authProblem) return;
+    void recoverSession().then((recovered) => {
+      if (recovered) {
+        router.invalidate();
+        reset();
+      } else {
+        void router.navigate({ to: "/auth" });
+      }
+    });
+  }, [authProblem, router, reset]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
