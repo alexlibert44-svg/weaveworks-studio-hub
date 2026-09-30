@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Play, Volume2 } from "lucide-react";
+import { ArrowLeft, Check, Play, Volume2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,9 +10,22 @@ import { useI18n } from "@/lib/i18n";
 import { speechLocale } from "@/lib/i18n/languages";
 import { getWord } from "@/lib/verba/api";
 import { posLabel } from "@/lib/verba/pos";
-import { UNIT_SKILLS, unitProgress, unitState, wordSkillItems } from "@/lib/verba/progress";
+import {
+  UNIT_SKILLS,
+  skillMastery,
+  unitProgress,
+  wordSkillItems,
+  wordStatus,
+} from "@/lib/verba/progress";
 import { speak } from "@/lib/verba/speech";
-import { SKILL_KEY } from "@/lib/verba/types";
+import type { MessageKey } from "@/lib/i18n";
+import type { Skill } from "@/lib/verba/types";
+
+const SKILL_LABEL: Partial<Record<Skill, MessageKey>> = {
+  writing: "word.skillWriting",
+  speaking: "word.skillPronunciation",
+  recall: "word.skillMeaning",
+};
 
 export const Route = createFileRoute("/sets/$setId/words/$wordId")({
   head: () => ({
@@ -47,16 +60,18 @@ function WordDetail() {
     );
   }
 
-  const { word, sentences, items, set } = data;
+  const { word, sentences, items, set, attempts } = data;
   const locale = speechLocale(set.target_language);
   const example = sentences.find((s) => s.form === "base") ?? sentences[0];
   const skillItems = wordSkillItems(items, word.id);
   const mastery = unitProgress(skillItems, UNIT_SKILLS);
+  const status = wordStatus(attempts);
+  const history = attempts.slice(0, 12);
 
   return (
     <AppShell>
       <Button asChild variant="ghost" size="icon" aria-label={t("word.backToSet")}>
-        <Link to="/sets/$setId" params={{ setId }}>
+        <Link to="/sets/$setId" params={{ setId }} search={{}}>
           <ArrowLeft className="size-5 rtl:rotate-180" />
         </Link>
       </Button>
@@ -87,6 +102,56 @@ function WordDetail() {
         </Button>
       </div>
 
+      <div className="card-surface mt-3 p-5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold">{t("word.overall")}</span>
+          <div className="flex items-center gap-2">
+            <StatePill state={status} />
+            <span className="text-sm font-bold text-primary">{mastery}%</span>
+          </div>
+        </div>
+        <MasteryBar value={mastery} className="mt-3" />
+        <ul className="mt-4 space-y-3">
+          {UNIT_SKILLS.map((skill) => {
+            const item = skillItems.find((i) => i.skill === skill);
+            const value = Math.round(Number(item?.mastery ?? 0));
+            const m = skillMastery(skill, attempts);
+            return (
+              <li key={skill}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
+                    {t(SKILL_LABEL[skill] as MessageKey)}
+                    {m.mastered ? (
+                      <Check className="size-3.5 text-success" aria-label={t("word.skillMastered")} />
+                    ) : null}
+                  </span>
+                  <span className="text-sm font-bold text-primary">
+                    {m.attempts === 0 ? t("word.notStarted") : `${value}%`}
+                  </span>
+                </div>
+                <MasteryBar value={m.attempts === 0 ? 0 : value} className="mt-1.5 h-1.5" />
+                {m.attempts > 0 ? (
+                  <p className="mt-1 text-[0.7rem] text-muted-foreground">
+                    {t("word.successes", {
+                      successes: m.successes,
+                      attempts: m.attempts,
+                      sessions: m.sessions,
+                    })}
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="mt-3 text-[0.7rem] text-muted-foreground">{t("word.masteryRule")}</p>
+      </div>
+
+      <Button asChild size="lg" className="mt-4 w-full rounded-2xl">
+        <Link to="/practice" search={{ set: setId, word: wordId }}>
+          <Play className="size-4" /> {t(status === "new" ? "word.train" : "word.review")}
+        </Link>
+      </Button>
+
       <div className="card-surface mt-4 p-5">
         <p className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
           {t("word.translation")}
@@ -114,45 +179,27 @@ function WordDetail() {
         </div>
       ) : null}
 
-      <div className="card-surface mt-3 p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">{t("word.mastery")}</span>
-          <div className="flex items-center gap-2">
-            <StatePill state={unitState(skillItems, UNIT_SKILLS)} />
-            <span className="text-sm font-bold text-primary">{mastery}%</span>
-          </div>
-        </div>
-        <MasteryBar value={mastery} className="mt-3" />
-      </div>
 
-      <h2 className="mt-7 mb-3 text-lg font-bold">{t("word.skills")}</h2>
-      <ul className="space-y-2.5">
-        {UNIT_SKILLS.map((skill) => {
-          const item = skillItems.find((i) => i.skill === skill);
-          const value = Math.round(Number(item?.mastery ?? 0));
-          return (
-            <li key={skill} className="card-surface p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">{t(SKILL_KEY[skill])}</span>
-                <span className="text-sm font-bold text-primary">{value}%</span>
-              </div>
-              <MasteryBar value={value} className="mt-2 h-1.5" />
-              <p className="mt-2 text-[0.7rem] text-muted-foreground">
-                {t("word.attempts", {
-                  attempts: item?.attempts ?? 0,
-                  mistakes: item?.mistakes ?? 0,
-                })}
-              </p>
+      <h2 className="mt-7 mb-3 text-lg font-bold">{t("word.history")}</h2>
+      {history.length === 0 ? (
+        <p className="card-surface p-4 text-sm text-muted-foreground">{t("word.historyEmpty")}</p>
+      ) : (
+        <ul className="card-surface divide-y divide-border px-4">
+          {history.map((a, index) => (
+            <li key={`${a.created_at}-${index}`} className="flex items-center gap-3 py-2.5 text-sm">
+              {a.is_correct ? (
+                <Check className="size-4 shrink-0 text-success" aria-label={t("word.correct")} />
+              ) : (
+                <X className="size-4 shrink-0 text-destructive" aria-label={t("word.incorrect")} />
+              )}
+              <span className="flex-1 font-semibold">{t(SKILL_LABEL[a.skill] as MessageKey)}</span>
+              <span className="text-xs text-muted-foreground" dir="ltr">
+                {new Date(a.created_at).toLocaleDateString()}
+              </span>
             </li>
-          );
-        })}
-      </ul>
-
-      <Button asChild size="lg" className="mt-6 w-full rounded-2xl">
-        <Link to="/practice" search={{ set: setId, word: wordId }}>
-          <Play className="size-4" /> {t("word.train")}
-        </Link>
-      </Button>
+          ))}
+        </ul>
+      )}
     </AppShell>
   );
 }
