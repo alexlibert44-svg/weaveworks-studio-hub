@@ -10,13 +10,13 @@
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 3px);
+  --radius-sm: calc(var(--radius) - 5px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 7px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 20px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -34,6 +34,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-circle-blue: var(--hero-circle-blue);
+  --color-hero-circle-purple: var(--hero-circle-purple);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
@@ -67,7 +70,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
   --background: #F8FAFC;
   --foreground: #172033;
@@ -110,7 +113,10 @@
   --sidebar-accent-foreground: #315A75;
   --sidebar-border: #E2E8F0;
   --sidebar-ring: #6C63E8;
-  --gradient-hero: #F4F2FF;
+  --hero-foreground: #FFFFFF;
+  --hero-circle-blue: #A8D8F0;
+  --hero-circle-purple: #EAE8FF;
+  --gradient-hero: linear-gradient(135deg, #554CCB 0%, #6C63E8 54%, #708EDC 100%);
   --gradient-accent: #6C63E8;
   --gradient-surface: #FFFFFF;
   --shadow-card: 0 4px 18px -12px color-mix(in srgb, var(--foreground) 18%, transparent);
@@ -147,7 +153,10 @@
   --border: #3F4A60;
   --input: #4B566B;
   --ring: #A8A2FF;
-  --gradient-hero: #39365B;
+  --hero-foreground: #FFFFFF;
+  --hero-circle-blue: #A8D8F0;
+  --hero-circle-purple: #EAE8FF;
+  --gradient-hero: linear-gradient(135deg, #554CCB 0%, #6C63E8 54%, #708EDC 100%);
   --gradient-accent: #A8A2FF;
   --gradient-surface: #222C40;
 }
@@ -203,7 +212,7 @@
 
 @utility card-surface {
   background: var(--gradient-surface);
-  border-radius: var(--radius);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-card);
   border: 1px solid var(--color-border);
 }

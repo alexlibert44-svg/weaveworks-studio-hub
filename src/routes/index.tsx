@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, Flame, Plus, Sparkles, Target } from "lucide-react";
+import { Flame, Plus, Sparkles, Target } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,14 @@ function greetingKey() {
 function Home() {
   const { deviceId, learner } = useLearner();
   const { t, target } = useI18n();
+  const [greeting, setGreeting] = useState<ReturnType<typeof greetingKey> | null>(null);
+
+  useEffect(() => {
+    const updateGreeting = () => setGreeting(greetingKey());
+    updateGreeting();
+    const timer = window.setInterval(updateGreeting, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const { data: due } = useQuery({
     queryKey: ["due", deviceId],
@@ -63,41 +72,35 @@ function Home() {
 
   return (
     <AppShell>
-      <div className="bg-hero-gradient animate-rise -mx-5 -mt-6 border-b border-border px-5 pt-8 pb-8 text-foreground">
-        <p className="text-sm text-muted-foreground">{t(greetingKey())}</p>
-        <h1 className="mt-1 text-3xl font-semibold text-primary-deep">{t("app.name")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("home.learning", { language: target.native })}</p>
+      <div className="bg-hero-gradient animate-rise relative -mx-5 -mt-6 overflow-hidden rounded-b-4xl px-5 pt-8 pb-9 text-hero-foreground shadow-card">
+        <div aria-hidden="true" className="pointer-events-none absolute -end-14 -top-16 size-52 rounded-full bg-hero-circle-blue opacity-30" />
+        <div aria-hidden="true" className="pointer-events-none absolute end-6 top-24 size-24 rounded-full bg-hero-circle-purple opacity-35" />
+        <div aria-hidden="true" className="pointer-events-none absolute -start-14 bottom-2 size-40 rounded-full bg-hero-circle-blue opacity-20" />
+        <div className="relative z-10">
+        <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
+        <p className="mt-3 min-h-5 text-sm font-medium text-hero-foreground/90">{greeting ? t(greeting) : ""}</p>
+        <p className="mt-1 text-sm text-hero-foreground/85">{t("home.learning", { language: target.native })}</p>
 
         <div className="mt-5 flex gap-3">
-          <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-4">
-            <Flame className="size-5 text-primary" />
+          <div className="min-w-0 flex-1 rounded-2xl border border-hero-foreground/15 bg-hero-foreground/12 p-4 backdrop-blur-sm">
+            <Flame className="size-5 text-hero-foreground" />
             <p className="mt-2 text-2xl font-bold">{learner.streak}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-hero-foreground/85">
               {learner.streak > 0 ? t("home.streak", { count: learner.streak }) : t("home.streakNone")}
             </p>
           </div>
-          <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-4">
-            <Target className="size-5 text-secondary-foreground" />
+          <div className="min-w-0 flex-1 rounded-2xl border border-hero-foreground/15 bg-hero-foreground/12 p-4 backdrop-blur-sm">
+            <Target className="size-5 text-hero-foreground" />
             <p className="mt-2 text-2xl font-bold">
               {minutes}
               <span className="text-sm font-semibold opacity-80">/{goal}</span>
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-hero-foreground/85">
               {t("home.goal")} · {goalPct}%
             </p>
           </div>
         </div>
-
-        <Button
-          asChild
-          size="lg"
-          className="mt-5 w-full"
-        >
-          <Link to="/practice" search={{}}>
-            {t("home.startReview")}
-            <ArrowRight className="size-4 rtl:rotate-180" />
-          </Link>
-        </Button>
+        </div>
       </div>
 
       <h2 className="mt-7 mb-3 text-lg font-bold">{t("home.dueTitle")}</h2>
