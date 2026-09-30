@@ -1,0 +1,3 @@
+- [x] Replace the shared palette and surfaces throughout LingoFlow without changing behavior.
+- [x] Align buttons, navigation, tabs, forms, badges, and training feedback.
+- [x] Verify mobile and Arabic layouts and inspect remaining old colors.

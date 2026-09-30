@@ -20,6 +20,8 @@ export const Route = createFileRoute("/sets/$setId/forms/$formId")({
       { name: "description", content: "How this form is built, an example, and your skill progress." },
       { property: "og:title", content: "Form Detail — LingoFlow" },
       { property: "og:description", content: "Learn and train one tense or form at a time." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FormDetail,

@@ -25,6 +25,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Your words, turned into sentences, listening, writing, speaking and recall.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Home,
@@ -61,26 +63,26 @@ function Home() {
 
   return (
     <AppShell>
-      <div className="bg-hero-gradient animate-rise -mx-5 -mt-6 rounded-b-4xl px-5 pt-8 pb-9 text-primary-foreground">
-        <p className="text-sm opacity-85">{t(greetingKey())}</p>
-        <h1 className="mt-1 text-3xl font-bold">{t("app.name")}</h1>
-        <p className="mt-1 text-sm opacity-85">{t("home.learning", { language: target.native })}</p>
+      <div className="bg-hero-gradient animate-rise -mx-5 -mt-6 border-b border-border px-5 pt-8 pb-8 text-foreground">
+        <p className="text-sm text-muted-foreground">{t(greetingKey())}</p>
+        <h1 className="mt-1 text-3xl font-semibold text-primary-deep">{t("app.name")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("home.learning", { language: target.native })}</p>
 
         <div className="mt-5 flex gap-3">
-          <div className="flex-1 rounded-2xl bg-primary-foreground/12 p-4 backdrop-blur">
-            <Flame className="size-5 text-accent" />
+          <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-4">
+            <Flame className="size-5 text-primary" />
             <p className="mt-2 text-2xl font-bold">{learner.streak}</p>
-            <p className="text-xs opacity-85">
+            <p className="text-xs text-muted-foreground">
               {learner.streak > 0 ? t("home.streak", { count: learner.streak }) : t("home.streakNone")}
             </p>
           </div>
-          <div className="flex-1 rounded-2xl bg-primary-foreground/12 p-4 backdrop-blur">
-            <Target className="size-5 text-accent" />
+          <div className="min-w-0 flex-1 rounded-lg border border-border bg-card p-4">
+            <Target className="size-5 text-secondary-foreground" />
             <p className="mt-2 text-2xl font-bold">
               {minutes}
               <span className="text-sm font-semibold opacity-80">/{goal}</span>
             </p>
-            <p className="text-xs opacity-85">
+            <p className="text-xs text-muted-foreground">
               {t("home.goal")} · {goalPct}%
             </p>
           </div>
@@ -89,7 +91,7 @@ function Home() {
         <Button
           asChild
           size="lg"
-          className="mt-5 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
+          className="mt-5 w-full"
         >
           <Link to="/practice" search={{}}>
             {t("home.startReview")}

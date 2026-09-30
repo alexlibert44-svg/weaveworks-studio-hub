@@ -24,18 +24,18 @@ export function BottomNav() {
               <Link
                 to={to}
                 aria-label={label}
-                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground transition-colors active:bg-secondary"
+                className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg text-muted-foreground transition-colors active:bg-primary-soft"
                 activeOptions={{ exact: to === "/" }}
                 activeProps={{ className: "text-primary" }}
               >
                 {to === "/add" ? (
-                  <span className="bg-accent-gradient -mt-4 flex size-11 items-center justify-center rounded-2xl text-accent-foreground shadow-glow">
+                  <span className="bg-primary -mt-4 flex size-11 items-center justify-center rounded-lg text-primary-foreground shadow-glow">
                     <Icon className="size-5" strokeWidth={2.6} />
                   </span>
                 ) : (
                   <Icon className="size-5" strokeWidth={2.1} />
                 )}
-                <span className="text-[0.68rem] font-semibold tracking-tight">{label}</span>
+                <span className="text-[0.68rem] font-semibold">{label}</span>
               </Link>
             </li>
           );

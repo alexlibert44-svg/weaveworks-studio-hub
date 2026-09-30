@@ -5,9 +5,9 @@ import type { MasteryState } from "@/lib/verba/types";
 
 const STYLES: Record<MasteryState, string> = {
   new: "bg-muted text-muted-foreground",
-  learning: "bg-warning-soft text-accent-foreground",
+  learning: "bg-accent-soft text-secondary-foreground",
   familiar: "bg-primary-soft text-primary-deep",
-  strong: "bg-success-soft text-success",
+  strong: "bg-primary-soft text-primary-deep",
   mastered: "bg-primary text-primary-foreground",
 };
 
@@ -39,7 +39,7 @@ export function MasteryBar({ value, className }: { value: number; className?: st
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-secondary", className)}>
       <div
-        className="bg-hero-gradient h-full rounded-full transition-[width] duration-500"
+        className="bg-primary h-full rounded-full transition-[width] duration-500"
         style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
       />
     </div>

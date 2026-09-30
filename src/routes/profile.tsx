@@ -29,6 +29,8 @@ export const Route = createFileRoute("/profile")({
         property: "og:description",
         content: "Change your languages and daily goal, and see your real progress.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProfilePage,
@@ -57,7 +59,7 @@ function ProfilePage() {
         <label className="text-sm font-semibold" htmlFor="display-name">
           {t("profile.nameLabel")}
         </label>
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex min-w-0 gap-2">
           <Input
             id="display-name"
             value={name}
@@ -103,8 +105,8 @@ function ProfilePage() {
               aria-pressed={learner.daily_goal_minutes === minutes}
               className={
                 learner.daily_goal_minutes === minutes
-                  ? "w-full rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground"
-                  : "w-full rounded-2xl bg-card py-3 text-sm font-semibold text-foreground shadow-card"
+                  ? "w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground"
+                  : "w-full rounded-lg border border-border bg-card py-3 text-sm font-semibold text-foreground"
               }
             >
               {minutes} {t("common.minutesShort")}
@@ -189,7 +191,7 @@ function LanguageSelect({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-label={label}
-        className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm font-semibold"
+        className="mt-1.5 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>
