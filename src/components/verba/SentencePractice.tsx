@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { SentenceEntry } from "@/lib/verba/reviews";
 import { evaluateSentence } from "@/lib/verba/sentence.functions";
+import { handleAuthFailure } from "@/lib/verba/session-token";
 import type { Word } from "@/lib/verba/types";
 
 /**
@@ -82,7 +83,8 @@ export function SentencePractice({
     } catch (e) {
       // Keep the learner's answer; allow retrying. Never mark it as evaluated.
       await persist(index, { ...entries, [word.id]: { text: value, status: "failed" } });
-      setError(e instanceof Error ? e.message : t("review.evalFailed"));
+      const signedOut = await handleAuthFailure(e);
+      setError(signedOut ? t("auth.expired") : e instanceof Error ? e.message : t("review.evalFailed"));
     } finally {
       setBusy(false);
     }

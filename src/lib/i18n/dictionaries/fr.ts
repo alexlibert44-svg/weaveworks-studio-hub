@@ -317,6 +317,7 @@ export const fr: Dictionary = {
   "auth.signout": "Se déconnecter",
   "review.saveFailed": "Impossible d'enregistrer votre progression. Réessayez.",
   "audio.retry": "Échec audio — réessayer",
+  "auth.expired": "Votre session a expiré. Veuillez vous reconnecter.",
   "train.showTranslation": "Afficher la traduction",
   "train.noMeaning": "Sens introuvable",
   "sets.totalItems": "{count} éléments au total",
