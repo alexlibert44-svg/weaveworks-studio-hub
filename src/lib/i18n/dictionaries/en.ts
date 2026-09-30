@@ -243,6 +243,21 @@ export const en = {
   "train.tapForHint": "Tap any word to see it in the language you are learning.",
   "train.writeMissing": "Missing words",
   "train.writeExtra": "Extra words",
+  "word.skillWriting": "Writing",
+  "word.skillPronunciation": "Pronunciation",
+  "word.skillMeaning": "Meaning",
+  "word.notStarted": "Not started",
+  "word.review": "Review this word",
+  "word.status": "Status",
+  "word.overall": "Word progress",
+  "word.successes": "{successes}/{attempts} correct · {sessions} sessions",
+  "word.skillMastered": "Skill mastered",
+  "word.masteryRule": "A skill is mastered after 5 correct attempts in a row across at least 3 sessions.",
+  "word.history": "Training history",
+  "word.historyEmpty": "No training yet.",
+  "word.correct": "Correct",
+  "word.incorrect": "Incorrect",
+  "word.category": "Part of speech",
 } as const;
 
 export type MessageKey = keyof typeof en;
