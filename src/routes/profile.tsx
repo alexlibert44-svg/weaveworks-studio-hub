@@ -1,6 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Flame, Languages } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Flame, Languages, LogOut } from "lucide-react";
+
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +39,15 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { deviceId, learner, refresh } = useLearner();
+  const { deviceId, email, learner, refresh } = useLearner();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const signOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    void navigate({ to: "/auth", replace: true });
+  };
   const { t } = useI18n();
   const [name, setName] = useState(learner.display_name ?? "");
 
@@ -148,7 +158,13 @@ function ProfilePage() {
         <StatCard label={t("profile.statLongest")} value={learner.longest_streak} />
       </ul>
 
-      <p className="mt-5 text-center text-xs text-muted-foreground">{t("profile.deviceNote")}</p>
+      <div className="card-surface mt-6 p-5">
+        <p className="text-xs text-muted-foreground">{t("auth.signedInAs")}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold" dir="ltr">{email}</p>
+        <Button variant="secondary" className="mt-4 w-full" onClick={() => void signOut()}>
+          <LogOut className="size-4 rtl:rotate-180" /> {t("auth.signout")}
+        </Button>
+      </div>
     </AppShell>
   );
 }
