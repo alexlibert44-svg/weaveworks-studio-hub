@@ -83,21 +83,6 @@ export function schedule(item: LearningItem, score: number): ScheduleUpdate {
   };
 }
 
-/**
- * Review priority: weakest + most overdue first. The review engine uses this
- * so a learner who keeps misspelling a word gets writing drills, and a learner
- * with weak pronunciation gets speaking drills.
- */
-export function priority(item: LearningItem, now = Date.now()): number {
-  const overdueDays = (now - new Date(item.next_review_at).getTime()) / 86400000;
-  const errorRate = item.attempts > 0 ? item.mistakes / item.attempts : 0.5;
-  return (100 - item.mastery) * 0.6 + Math.max(overdueDays, 0) * 8 + errorRate * 40;
-}
-
-export function isDue(item: LearningItem, now = Date.now()): boolean {
-  return new Date(item.next_review_at).getTime() <= now;
-}
-
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
