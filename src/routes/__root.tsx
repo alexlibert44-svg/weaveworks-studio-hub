@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppGate } from "@/components/verba/AppGate";
+import { AppErrorBoundary } from "@/components/verba/AppErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 import { isAuthFailure, recoverSession } from "@/lib/verba/session-token";
 
@@ -146,12 +147,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppGate>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </AppGate>
-      <Toaster />
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppGate>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AppGate>
+        <Toaster />
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
