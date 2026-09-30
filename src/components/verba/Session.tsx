@@ -23,6 +23,7 @@ import {
   type PronunciationResult,
 } from "@/lib/verba/pronunciation.functions";
 import { posLabel } from "@/lib/verba/pos";
+import { handleAuthFailure } from "@/lib/verba/session-token";
 import { speak } from "@/lib/verba/speech";
 import { SpeakButton } from "@/components/verba/SpeakButton";
 import { TappableSentence } from "@/components/verba/TappableSentence";
