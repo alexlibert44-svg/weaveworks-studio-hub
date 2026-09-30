@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AppShell, PageTitle } from "@/components/verba/AppShell";
 import { useLearner } from "@/components/verba/AppGate";
+import { LanguageSelector } from "@/components/verba/LanguageSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { LANGUAGES, TARGET_LANGUAGES, type LanguageMeta } from "@/lib/i18n/languages";
+import { LANGUAGES, TARGET_LANGUAGES } from "@/lib/i18n/languages";
 import { updateLearner } from "@/lib/verba/api";
 import type { Learner } from "@/lib/verba/types";
 
@@ -78,19 +79,22 @@ function SettingsPage() {
 
       <Section title={t("profile.languages")}>
         <div className="card-surface space-y-4 p-5">
-          <LanguageSelect
-            label={t("profile.native")}
-            value={learner.native_language}
-            languages={LANGUAGES}
-            onChange={(code) => save.mutate({ native_language: code })}
-          />
-          <LanguageSelect
+          <LanguageSelector
             label={t("profile.target")}
             value={learner.learning_language}
             languages={TARGET_LANGUAGES}
             onChange={(code) => save.mutate({ learning_language: code })}
+            disabled={save.isPending}
+          />
+          <LanguageSelector
+            label={t("profile.native")}
+            value={learner.native_language}
+            languages={LANGUAGES}
+            onChange={(code) => save.mutate({ native_language: code })}
+            disabled={save.isPending}
           />
           <p className="text-xs text-muted-foreground">{t("profile.targetChangeNote")}</p>
+          {save.isError ? <p role="alert" className="text-sm text-destructive">{t("settings.saveError")}</p> : null}
         </div>
       </Section>
 
@@ -142,35 +146,5 @@ function SettingsPage() {
         </div>
       </Section>
     </AppShell>
-  );
-}
-
-function LanguageSelect({
-  label,
-  value,
-  languages,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  languages: LanguageMeta[];
-  onChange: (code: string) => void;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-semibold">{label}</label>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-label={label}
-        className="mt-1.5 h-11 w-full rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {languages.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.native} — {lang.english}
-          </option>
-        ))}
-      </select>
-    </div>
   );
 }
