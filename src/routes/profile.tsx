@@ -10,7 +10,7 @@ import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { getProfileStats, updateLearner } from "@/lib/verba/api";
+import { getLanguageStreak, getProfileStats, updateLearner } from "@/lib/verba/api";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -37,6 +37,10 @@ function ProfilePage() {
   const { data: stats } = useQuery({
     queryKey: ["stats", deviceId, learner.learning_language],
     queryFn: () => getProfileStats(deviceId, learner.learning_language),
+  });
+  const { data: streak } = useQuery({
+    queryKey: ["language-streak", deviceId, learner.learning_language],
+    queryFn: () => getLanguageStreak(deviceId, learner.learning_language),
   });
 
   const avatarPath = learner.avatar_path ?? null;
@@ -154,7 +158,7 @@ function ProfilePage() {
         <StatCard label={t("profile.statMastered")} value={stats?.masteredWords ?? 0} />
         <StatCard
           label={t("profile.statStreak")}
-          value={learner.streak}
+          value={streak ?? 0}
           icon={<Flame className="size-4 text-accent" />}
         />
       </ul>

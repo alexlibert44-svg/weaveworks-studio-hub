@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Flame, Plus, Sparkles, Target } from "lucide-react";
 
@@ -14,7 +14,10 @@ import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { StatePill } from "@/components/verba/MasteryPill";
 import { useI18n } from "@/lib/i18n";
-import { getDailyProgress, listSets } from "@/lib/verba/api";
+import { getDailyProgress, getLanguageStreak, listSets, updateLearner } from "@/lib/verba/api";
+import { TARGET_LANGUAGES } from "@/lib/i18n/languages";
+
+const TARGET_FLAGS: Record<string, string> = { en: "🇬🇧", fr: "🇫🇷", es: "🇪🇸", de: "🇩🇪" };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,8 +48,13 @@ function greetingKey() {
 }
 
 function Home() {
-  const { deviceId, learner } = useLearner();
+  const { deviceId, learner, refresh } = useLearner();
   const { t, target } = useI18n();
+  const queryClient = useQueryClient();
+  const changeLanguage = useMutation({
+    mutationFn: (code: string) => updateLearner(deviceId, { learning_language: code }),
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["learner", deviceId] }); refresh(); },
+  });
   const [greeting, setGreeting] = useState<ReturnType<typeof greetingKey> | null>(null);
 
   useEffect(() => {
@@ -69,6 +77,10 @@ function Home() {
     queryKey: ["daily", deviceId, learner.learning_language],
     queryFn: () => getDailyProgress(deviceId, learner.learning_language),
   });
+  const { data: streak } = useQuery({
+    queryKey: ["language-streak", deviceId, learner.learning_language],
+    queryFn: () => getLanguageStreak(deviceId, learner.learning_language),
+  });
 
   const recent = sets?.[0];
   const goal = Math.max(1, Number(learner.daily_goal_minutes) || 1);
@@ -80,15 +92,33 @@ function Home() {
     <AppShell>
       <SignatureFrame>
         <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
+        <div className="mt-4 flex items-center gap-2">
+          <label htmlFor="home-language" className="sr-only">{t("profile.target")}</label>
+          <select
+            id="home-language"
+            value={learner.learning_language}
+            onChange={(event) => changeLanguage.mutate(event.target.value)}
+            disabled={changeLanguage.isPending}
+            aria-label={t("profile.target")}
+            className="min-h-11 max-w-full rounded-full border border-hero-foreground/40 bg-hero-foreground/15 px-4 text-sm font-semibold text-hero-foreground shadow-card backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-hero-foreground disabled:opacity-60"
+          >
+            {TARGET_LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code} className="text-foreground">
+                {TARGET_FLAGS[lang.code] ?? "🌐"} {lang.native}
+              </option>
+            ))}
+          </select>
+          {changeLanguage.isError ? <span role="alert" className="text-xs text-hero-foreground">{t("profile.targetChangeNote")}</span> : null}
+        </div>
         <p className="mt-3 min-h-5 text-sm font-medium text-hero-foreground/90">{greeting ? t(greeting) : ""}</p>
         <p className="mt-1 text-sm text-hero-foreground/85">{t("home.learning", { language: target.native })}</p>
 
         <div className="mt-5 flex gap-3">
           <div className="min-w-0 flex-1 rounded-2xl border border-hero-foreground/15 bg-hero-foreground/12 p-4 backdrop-blur-sm">
             <Flame className="size-5 text-hero-foreground" />
-            <p className="mt-2 text-2xl font-bold">{learner.streak}</p>
+            <p className="mt-2 text-2xl font-bold">{streak ?? 0}</p>
             <p className="text-xs text-hero-foreground/85">
-              {learner.streak > 0 ? t("home.streak", { count: learner.streak }) : t("home.streakNone")}
+              {(streak ?? 0) > 0 ? t("home.streak", { count: streak ?? 0 }) : t("home.streakNone")}
             </p>
           </div>
           <div className="min-w-0 flex-1 rounded-2xl border border-hero-foreground/15 bg-hero-foreground/12 p-4 backdrop-blur-sm">

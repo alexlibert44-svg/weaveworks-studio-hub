@@ -683,6 +683,17 @@ function computeStreak(days: { day: string; minutes_practiced: number }[]): numb
   return streak;
 }
 
+export async function getLanguageStreak(deviceId: string, targetLanguage: string): Promise<number> {
+  const { data, error } = await supabase.from("language_daily_progress")
+    .select("day, minutes_practiced")
+    .eq("device_id", deviceId)
+    .eq("target_language", targetLanguage)
+    .order("day", { ascending: false })
+    .limit(60);
+  if (error) throw error;
+  return computeStreak((data ?? []) as { day: string; minutes_practiced: number }[]);
+}
+
 export interface ProfileStats {
   totalWords: number;
   masteredWords: number;
