@@ -634,7 +634,7 @@ export async function logSession(deviceId: string, minutes: number, itemsComplet
   await supabase
     .from("daily_progress")
     .update({
-      minutes_practiced: Number(progress.minutes_practiced) + minutes,
+      minutes_practiced: saneMinutes(progress.minutes_practiced) + saneMinutes(minutes),
       items_completed: progress.items_completed + itemsCompleted,
     })
     .eq("id", progress.id);
