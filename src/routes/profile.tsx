@@ -90,7 +90,7 @@ function ProfilePage() {
           </Button>
         </header>
         <div className="mt-5 flex flex-col items-center text-center">
-          <div className="relative">
+          <div className="relative rounded-full bg-accent-gradient p-1 shadow-card ring-1 ring-hero-foreground/70">
             <div className="grid size-28 place-items-center overflow-hidden rounded-full bg-hero-foreground/15 text-hero-foreground ring-2 ring-hero-foreground/60 shadow-card sm:size-32">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={learner.display_name} className="size-full object-cover" />
@@ -142,7 +142,7 @@ function ProfilePage() {
             </div>
           ) : (
             <>
-              <p className="mt-3 max-w-full break-words text-xl font-semibold text-hero-foreground">{learner.display_name}</p>
+              <p className="mt-4 max-w-full break-words text-xl font-semibold text-hero-foreground">{learner.display_name}</p>
               <Button variant="secondary" size="sm" className="mt-3 min-h-11 px-5 shadow-card" onClick={() => setEditing(true)}>
                 <Pencil className="size-3.5" /> {t("profile.edit")}
               </Button>

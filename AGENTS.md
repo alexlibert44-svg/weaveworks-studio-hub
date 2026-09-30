@@ -16,5 +16,6 @@
 - Review scheduling is adaptive and computed only in `complete_review_session` from the session's real answers (accuracy ≥85% strong, ≥60% moderate, else poor) plus timing (on time / late / long delay); results are stored on `review_sessions`. Why: deterministic, persisted, never AI-chosen.
 - Meaning multiple-choice distractors come from `getMeaningQuestion` (AI, validated: 3 unique non-matching options, retried up to 3 times); the correct answer is always the saved meaning. Why: works for single-word sessions without fake options.
 - Profile pictures live in the private `avatars` bucket at `<uid>/...`; `learners.avatar_path` stores the path and the UI uses signed URLs. Why: workspace blocks public buckets.
-- Keep Home, Review, and Profile header lighting in the shared SignatureFrame component, and express shared surface/button/progress effects as CSS tokens and utilities. Why: the visual identity stays consistent without touching screen behavior.
-- Scope sets, review units, practice, statistics and daily activity by `word_sets.target_language`; keep daily minutes in `language_daily_progress` and derive streaks from it. Why: changing the active language must preserve and isolate each language's work.
+- Use SignatureFrame for Home, Review and Profile; CSS tokens for surfaces/buttons/progress. Why: consistent identity without behavior changes.
+- Scope sets/reviews/practice/stats to `word_sets.target_language`, and daily minutes/streaks to `language_daily_progress`. Why: languages remain isolated.
+- Use shared LanguageSelector on Home and Settings with a body portal and own scroll area. Why: mobile scrolling stays in the list.

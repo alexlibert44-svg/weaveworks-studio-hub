@@ -233,6 +233,17 @@
   box-shadow: 0 0 8px -3px var(--primary);
 }
 
+@utility button-glass {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--card) 78%, var(--accent)), color-mix(in srgb, var(--accent-soft) 86%, var(--accent)));
+  border: 1px solid color-mix(in srgb, var(--accent) 62%, var(--card));
+  color: var(--accent-foreground);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--card) 90%, transparent) inset, 0 8px 16px -12px color-mix(in srgb, var(--primary-deep) 45%, transparent), 0 2px 5px -4px var(--primary-deep);
+  &:hover { filter: brightness(1.025); transform: translateY(-1px); }
+  &:active { transform: translateY(1px); box-shadow: 0 2px 5px -3px var(--primary-deep) inset; }
+  &:disabled, &[aria-disabled="true"] { filter: saturate(.5); transform: none; box-shadow: none; }
+}
+
 .signature-frame {
   border: 1px solid color-mix(in srgb, var(--hero-circle-blue) 45%, transparent);
   border-top: 0;
