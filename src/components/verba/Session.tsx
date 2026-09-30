@@ -731,7 +731,6 @@ function WriteStep({
               text={sentence.translation}
               sentence={sentence}
               locale={locale}
-              hidden={blanked ? word.text : null}
             />
           </div>
         ) : support && task ? (
