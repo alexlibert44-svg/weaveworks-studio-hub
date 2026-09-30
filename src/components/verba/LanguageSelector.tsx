@@ -82,13 +82,15 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
       {open && createPortal(
         <div className="fixed inset-0 z-50 touch-none" onPointerDown={(event) => {
           if (event.target === event.currentTarget) setOpen(false);
+        }} onTouchMove={(event) => {
+          if (event.target === event.currentTarget) event.preventDefault();
         }}>
           <div
             id={id}
             role="listbox"
             aria-label={label}
             style={{ top: position.top, left: position.left }}
-            className="fixed z-10 w-60 max-w-[calc(100vw-1.5rem)] max-h-[min(25rem,65dvh,calc(100dvh-1.5rem))] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-popover p-1.5 text-popover-foreground shadow-float touch-pan-y [-webkit-overflow-scrolling:touch]"
+            className="fixed z-10 w-60 max-w-[calc(100vw-1.5rem)] max-h-[min(25rem,65dvh,calc(100dvh-1.5rem))] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-popover p-1.5 text-popover-foreground shadow-card touch-pan-y [-webkit-overflow-scrolling:touch]"
           >
             {languages.map((item) => (
               <Button
