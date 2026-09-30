@@ -479,7 +479,16 @@ function SpeakStep({
         attemptIndex,
       }).catch(() => undefined);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("train.pronFailed"));
+      // An expired sign-in must not break the microphone: renew it silently,
+      // and only ask the user to sign in again when renewal is impossible.
+      const signedOut = await handleAuthFailure(cause);
+      setError(
+        signedOut
+          ? t("auth.expired")
+          : cause instanceof Error && cause.message
+            ? cause.message
+            : t("train.pronFailed"),
+      );
       setState("idle");
     }
   };
