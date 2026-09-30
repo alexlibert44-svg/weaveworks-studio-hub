@@ -316,6 +316,7 @@ export const en = {
   "auth.signout": "Sign out",
   "review.saveFailed": "Couldn't save your progress. Check your connection and try again.",
   "audio.retry": "Audio failed — retry",
+  "auth.expired": "Your sign-in expired. Please sign in again.",
   "train.showTranslation": "Show translation",
   "train.noMeaning": "No meaning found",
   "sets.totalItems": "{count} items in total",

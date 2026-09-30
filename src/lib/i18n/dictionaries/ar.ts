@@ -317,6 +317,7 @@ export const ar: Dictionary = {
   "auth.signout": "تسجيل الخروج",
   "review.saveFailed": "تعذّر حفظ تقدمك. تحقق من الاتصال وحاول مرة أخرى.",
   "audio.retry": "فشل الصوت — أعد المحاولة",
+  "auth.expired": "انتهت صلاحية تسجيل دخولك. يُرجى تسجيل الدخول مرة أخرى.",
   "train.showTranslation": "إظهار الترجمة",
   "train.noMeaning": "لم يُعثر على معنى",
   "sets.totalItems": "{count} عنصرًا إجمالًا",
