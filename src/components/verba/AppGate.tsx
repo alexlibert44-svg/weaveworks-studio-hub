@@ -109,6 +109,18 @@ export function AppGate({ children }: { children: ReactNode }) {
     const timer = window.setTimeout(() => setLearnerSlow(true), 8000);
     return () => window.clearTimeout(timer);
   }, [userId, learner]);
+  // A failed load usually means the saved sign-in expired and couldn't be
+  // renewed, so requests went out anonymously. Verify with the auth server
+  // and send the user back to sign in instead of showing an error.
+  useEffect(() => {
+    if (!learnerFailed) return;
+    void supabase.auth.getUser().then(async ({ data: u, error }) => {
+      if (error || !u.user) {
+        await supabase.auth.signOut().catch(() => undefined);
+        setSession(null);
+      }
+    });
+  }, [learnerFailed]);
 
   const isPublic = PUBLIC_PATHS.includes(routeId) && PUBLIC_PATHS.includes(pathname);
 

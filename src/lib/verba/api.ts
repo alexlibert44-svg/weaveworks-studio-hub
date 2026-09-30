@@ -72,11 +72,12 @@ export async function wordAttemptsByWord(
 /* ---------------------------------- learner --------------------------------- */
 
 export async function ensureLearner(deviceId: string): Promise<Learner> {
-  const { data } = await supabase
+  const { data, error: readError } = await supabase
     .from("learners")
     .select("*")
     .eq("device_id", deviceId)
     .maybeSingle();
+  if (readError) throw readError;
   if (data) return data as Learner;
 
   const { data: created, error } = await supabase
