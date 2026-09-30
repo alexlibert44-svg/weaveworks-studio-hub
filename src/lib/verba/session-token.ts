@@ -76,3 +76,14 @@ export async function recoverSession(): Promise<boolean> {
   await supabase.auth.signOut().catch(() => undefined);
   return false;
 }
+
+/**
+ * Handles an error from any authenticated call. Returns true when it was a
+ * sign-in problem that couldn't be recovered, so the caller can show a
+ * "please sign in again" message instead of a raw error.
+ */
+export async function handleAuthFailure(error: unknown): Promise<boolean> {
+  if (!isAuthFailure(error)) return false;
+  const recovered = await recoverSession();
+  return !recovered;
+}
