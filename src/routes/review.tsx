@@ -125,7 +125,7 @@ function ReviewPage() {
         <Skeleton className="h-40 rounded-2xl" />
       ) : (
         <>
-          <section className="card-surface space-y-4 p-3">
+          <section className="space-y-4">
             <Segmented
               value={main}
               onChange={setMain}

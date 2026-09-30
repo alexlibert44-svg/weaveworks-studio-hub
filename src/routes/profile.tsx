@@ -75,7 +75,7 @@ function ProfilePage() {
 
   return (
     <AppShell>
-      <SignatureFrame className="mb-5 pb-7">
+      <SignatureFrame className="mb-6 pb-8">
         <header className="flex items-center justify-between gap-3">
           <h1 className="min-w-0 text-2xl font-semibold text-hero-foreground">{t("profile.title")}</h1>
           <Button asChild variant="ghost" size="icon" className="shrink-0 text-hero-foreground hover:bg-hero-foreground/15 hover:text-hero-foreground" aria-label={t("profile.openSettings")}>
@@ -84,81 +84,78 @@ function ProfilePage() {
             </Link>
           </Button>
         </header>
-      </SignatureFrame>
-
-      <section className="card-surface flex flex-col items-center p-6 text-center animate-rise">
-        <div className="relative">
-          <div className="grid size-24 place-items-center overflow-hidden rounded-full bg-secondary text-primary">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={learner.display_name} className="size-full object-cover" />
-            ) : (
-              <User className="size-10" />
-            )}
-          </div>
-          {editing ? (
-            <Button
-              size="icon"
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              aria-label={t("profile.changePhoto")}
-              className="absolute -bottom-1 -end-1 size-9 rounded-full"
-            >
-              {upload.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-            </Button>
-          ) : null}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) upload.mutate(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-
-        {editing ? (
-          <div className="mt-5 w-full">
-            <label className="sr-only" htmlFor="display-name">{t("profile.nameLabel")}</label>
-            <Input
-              id="display-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-11 rounded-xl text-center"
-            />
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={() => { setName(learner.display_name ?? ""); setEditing(false); }}>
-                {t("common.cancel")}
-              </Button>
-              <Button onClick={() => saveName.mutate()} disabled={saveName.isPending}>
-                {t("common.save")}
-              </Button>
+        <div className="mt-5 flex flex-col items-center text-center">
+          <div className="relative">
+            <div className="grid size-20 place-items-center overflow-hidden rounded-full bg-hero-foreground/15 text-hero-foreground ring-2 ring-hero-foreground/45 shadow-card">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={learner.display_name} className="size-full object-cover" />
+              ) : (
+                <User className="size-9" />
+              )}
             </div>
+            {editing ? (
+              <Button
+                size="icon"
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                aria-label={t("profile.changePhoto")}
+                className="absolute -bottom-1 -end-1 size-9 rounded-full"
+              >
+                {upload.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+              </Button>
+            ) : null}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) upload.mutate(file);
+                e.target.value = "";
+              }}
+            />
           </div>
-        ) : (
-          <>
-            <p className="mt-4 text-xl font-semibold">{learner.display_name}</p>
-            <Button variant="secondary" size="sm" className="mt-3" onClick={() => setEditing(true)}>
-              <Pencil className="size-3.5" /> {t("profile.edit")}
-            </Button>
-          </>
-        )}
-        {photoError ? <p className="mt-3 text-sm text-destructive">{t("profile.photoError")}</p> : null}
-      </section>
+
+          {editing ? (
+            <div className="mt-4 w-full max-w-xs">
+              <label className="sr-only" htmlFor="display-name">{t("profile.nameLabel")}</label>
+              <Input
+                id="display-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-11 rounded-xl bg-card text-center text-foreground"
+              />
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Button variant="secondary" onClick={() => { setName(learner.display_name ?? ""); setEditing(false); }}>
+                  {t("common.cancel")}
+                </Button>
+                <Button onClick={() => saveName.mutate()} disabled={saveName.isPending}>
+                  {t("common.save")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="mt-3 max-w-full break-words text-xl font-semibold text-hero-foreground">{learner.display_name}</p>
+              <Button variant="ghost" size="sm" className="mt-2 text-hero-foreground hover:bg-hero-foreground/15 hover:text-hero-foreground" onClick={() => setEditing(true)}>
+                <Pencil className="size-3.5" /> {t("profile.edit")}
+              </Button>
+            </>
+          )}
+          {photoError ? <p className="mt-3 text-sm text-destructive">{t("profile.photoError")}</p> : null}
+        </div>
+      </SignatureFrame>
 
       <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.stats")}</h2>
       <ul className="grid grid-cols-2 gap-2.5">
         <StatCard label={t("profile.statWords")} value={stats?.totalWords ?? 0} />
-        <StatCard label={t("profile.statLearning")} value={stats?.learningWords ?? 0} />
         <StatCard label={t("profile.statMastered")} value={stats?.masteredWords ?? 0} />
         <StatCard
           label={t("profile.statStreak")}
           value={learner.streak}
           icon={<Flame className="size-4 text-accent" />}
         />
-        <StatCard label={t("profile.statLongest")} value={learner.longest_streak} />
       </ul>
     </AppShell>
   );

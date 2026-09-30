@@ -100,18 +100,15 @@ function SettingsPage() {
           <ul className="grid grid-cols-4 gap-2">
             {GOALS.map((minutes) => (
               <li key={minutes}>
-                <button
+                <Button
                   type="button"
+                  variant={learner.daily_goal_minutes === minutes ? "default" : "secondary"}
                   onClick={() => save.mutate({ daily_goal_minutes: minutes })}
                   aria-pressed={learner.daily_goal_minutes === minutes}
-                  className={
-                    learner.daily_goal_minutes === minutes
-                      ? "w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground"
-                      : "w-full rounded-lg border border-border bg-card py-3 text-sm font-semibold text-foreground"
-                  }
+                  className="w-full px-1"
                 >
                   {minutes} {t("common.minutesShort")}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

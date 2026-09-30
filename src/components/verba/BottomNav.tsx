@@ -29,7 +29,7 @@ export function BottomNav() {
                 activeProps={{ className: "text-primary" }}
               >
                 {to === "/add" ? (
-                  <span className="button-raised -mt-4 flex size-11 items-center justify-center rounded-lg shadow-glow">
+                  <span className="button-raised -mt-4 flex size-11 shrink-0 items-center justify-center rounded-full shadow-glow">
                     <Icon className="size-5" strokeWidth={2.6} />
                   </span>
                 ) : (

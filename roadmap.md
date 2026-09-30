@@ -7,3 +7,5 @@
 - [x] Refresh the existing LingoFlow visual identity across shared controls, surfaces, and progress indicators.
 - [x] Carry the Home signature frame into Review and Profile without changing their behavior.
 - [x] Verify signed-in Home, Review, Profile, and a learning screen on desktop and mobile.
+- [x] Unify Profile identity and Review header with the shared signature frame, remove the two requested Profile statistics, and round the Home add control.
+- [x] Inspect signed-in Home, Profile, and Review on mobile and desktop after the correction.
