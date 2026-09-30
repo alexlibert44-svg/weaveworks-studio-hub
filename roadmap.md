@@ -4,3 +4,6 @@
 - [x] Restore the Home frame with purple-blue depth, decorative circles, English brand name, and a local-time greeting; remove its review button.
 - [x] Refine shared corner shapes while preserving existing page structures and interactions.
 - [x] Check the Home screen on small English and Arabic mobile layouts.
+- [ ] Refresh the existing LingoFlow visual identity across shared controls, surfaces, and progress indicators.
+- [ ] Carry the Home signature frame into Review and Profile without changing their behavior.
+- [ ] Verify signed-in Home, Review, Profile, and a learning screen on desktop and mobile.

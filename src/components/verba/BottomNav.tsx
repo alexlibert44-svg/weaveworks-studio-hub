@@ -15,7 +15,7 @@ export function BottomNav() {
   const { t } = useI18n();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 shadow-float backdrop-blur-lg">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/85 shadow-float backdrop-blur-lg">
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {items.map(({ to, key, icon: Icon }) => {
           const label = t(key);
@@ -29,7 +29,7 @@ export function BottomNav() {
                 activeProps={{ className: "text-primary" }}
               >
                 {to === "/add" ? (
-                  <span className="bg-primary -mt-4 flex size-11 items-center justify-center rounded-lg text-primary-foreground shadow-glow">
+                  <span className="button-raised -mt-4 flex size-11 items-center justify-center rounded-lg shadow-glow">
                     <Icon className="size-5" strokeWidth={2.6} />
                   </span>
                 ) : (
