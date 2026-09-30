@@ -16,6 +16,7 @@ import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as SetsIndexRouteImport } from './routes/sets.index'
 import { Route as SetsSetIdIndexRouteImport } from './routes/sets.$setId.index'
 import { Route as SetsSetIdFormsFormIdRouteImport } from './routes/sets.$setId.forms.$formId'
@@ -56,6 +57,11 @@ const ReviewRoute = ReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetsIndexRoute = SetsIndexRouteImport.update({
   id: '/sets/',
   path: '/sets/',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/api/tts': typeof ApiTtsRoute
   '/sets/': typeof SetsIndexRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/api/tts': typeof ApiTtsRoute
   '/sets': typeof SetsIndexRoute
   '/sets/$setId': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
+  '/api/tts': typeof ApiTtsRoute
   '/sets/': typeof SetsIndexRoute
   '/sets/$setId/': typeof SetsSetIdIndexRoute
   '/sets/$setId/forms/$formId': typeof SetsSetIdFormsFormIdRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/api/tts'
     | '/sets/'
     | '/sets/$setId/'
     | '/sets/$setId/forms/$formId'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/api/tts'
     | '/sets'
     | '/sets/$setId'
     | '/sets/$setId/forms/$formId'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/review'
+    | '/api/tts'
     | '/sets/'
     | '/sets/$setId/'
     | '/sets/$setId/forms/$formId'
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
+  ApiTtsRoute: typeof ApiTtsRoute
   SetsIndexRoute: typeof SetsIndexRoute
   SetsSetIdIndexRoute: typeof SetsSetIdIndexRoute
   SetsSetIdFormsFormIdRoute: typeof SetsSetIdFormsFormIdRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sets/': {
       id: '/sets/'
       path: '/sets'
@@ -263,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
+  ApiTtsRoute: ApiTtsRoute,
   SetsIndexRoute: SetsIndexRoute,
   SetsSetIdIndexRoute: SetsSetIdIndexRoute,
   SetsSetIdFormsFormIdRoute: SetsSetIdFormsFormIdRoute,
