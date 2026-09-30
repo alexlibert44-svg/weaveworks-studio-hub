@@ -1,3 +1,6 @@
 - [x] Replace the shared palette and surfaces throughout LingoFlow without changing behavior.
 - [x] Align buttons, navigation, tabs, forms, badges, and training feedback.
 - [x] Verify mobile and Arabic layouts and inspect remaining old colors.
+- [x] Restore the Home frame with purple-blue depth, decorative circles, English brand name, and a local-time greeting; remove its review button.
+- [x] Refine shared corner shapes while preserving existing page structures and interactions.
+- [x] Check the Home screen on small English and Arabic mobile layouts.

@@ -127,9 +127,9 @@ function ReviewPage() {
         </div>
       ) : (
         <>
-          <div className="bg-hero-gradient animate-rise rounded-lg border border-border p-6 text-foreground">
-            <p className="text-sm text-muted-foreground">{t("review.due")}</p>
-            <p className="mt-1 text-4xl font-semibold text-primary-deep">{due.total}</p>
+          <div className="bg-hero-gradient animate-rise rounded-2xl p-6 text-hero-foreground">
+            <p className="text-sm text-hero-foreground/85">{t("review.due")}</p>
+            <p className="mt-1 text-4xl font-semibold text-hero-foreground">{due.total}</p>
             <Button
               asChild
               size="lg"
