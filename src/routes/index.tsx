@@ -7,6 +7,7 @@ import { unitState } from "@/lib/verba/reviews";
 import { useReviewUnits } from "@/lib/verba/use-review-units";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,13 +55,22 @@ function Home() {
   const queryClient = useQueryClient();
   const [languageOpen, setLanguageOpen] = useState(false);
   const languageMenu = useRef<HTMLDivElement>(null);
+  const languageButton = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   useEffect(() => {
     if (!languageOpen) return;
     const closeOutside = (event: PointerEvent) => {
-      if (!languageMenu.current?.contains(event.target as Node)) setLanguageOpen(false);
+      if (!languageMenu.current?.contains(event.target as Node) && !(event.target as Element).closest?.("#home-language-options")) setLanguageOpen(false);
     };
+    const closeOnScroll = () => setLanguageOpen(false);
     document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
+    window.addEventListener("resize", closeOnScroll);
+    window.addEventListener("scroll", closeOnScroll, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      window.removeEventListener("resize", closeOnScroll);
+      window.removeEventListener("scroll", closeOnScroll, true);
+    };
   }, [languageOpen]);
   const changeLanguage = useMutation({
     mutationFn: (code: string) => updateLearner(deviceId, { learning_language: code }),
@@ -105,12 +115,19 @@ function Home() {
         <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
         <div className="relative mt-4 w-fit max-w-full" ref={languageMenu}>
           <Button
+            ref={languageButton}
             type="button"
             variant="ghost"
             aria-label={t("profile.target")}
             aria-expanded={languageOpen}
             aria-controls="home-language-options"
-            onClick={() => setLanguageOpen((open) => !open)}
+            onClick={() => {
+              if (!languageOpen && languageButton.current) {
+                const rect = languageButton.current.getBoundingClientRect();
+                setMenuPosition({ top: rect.bottom + 8, left: Math.max(12, Math.min(rect.left, window.innerWidth - 236)) });
+              }
+              setLanguageOpen((open) => !open);
+            }}
             disabled={changeLanguage.isPending}
             className="h-11 max-w-full gap-2 border border-hero-foreground/40 bg-hero-foreground/15 px-3 text-hero-foreground shadow-card backdrop-blur-sm hover:bg-hero-foreground/25 hover:text-hero-foreground"
           >
@@ -118,8 +135,8 @@ function Home() {
             <span className="truncate" dir="auto">{target.native}</span>
             <ChevronDown className="size-4 shrink-0" />
           </Button>
-          {languageOpen ? (
-            <div id="home-language-options" className="absolute start-0 top-full z-30 mt-2 max-h-64 w-56 max-w-[calc(100vw-2.5rem)] overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-card">
+          {languageOpen ? createPortal(
+            <div id="home-language-options" role="group" aria-label={t("profile.target")} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed z-50 max-h-[min(20rem,calc(100dvh-9rem))] w-56 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-card">
               {TARGET_LANGUAGES.map((lang) => (
                 <Button
                   key={lang.code}
@@ -135,7 +152,7 @@ function Home() {
                   {learner.learning_language === lang.code ? <Check className="size-4 shrink-0 text-primary" /> : null}
                 </Button>
               ))}
-            </div>
+            </div>, document.body
           ) : null}
           {changeLanguage.isError ? <span role="alert" className="text-xs text-hero-foreground">{t("settings.saveError")}</span> : null}
         </div>
