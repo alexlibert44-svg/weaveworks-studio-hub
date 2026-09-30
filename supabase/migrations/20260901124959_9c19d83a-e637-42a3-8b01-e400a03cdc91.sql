@@ -1,0 +1,1 @@
+ALTER TABLE public.words ADD COLUMN IF NOT EXISTS alternative_parts_of_speech text[] NOT NULL DEFAULT '{}'::text[];
