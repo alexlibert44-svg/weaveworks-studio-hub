@@ -739,10 +739,6 @@ function WriteStep({
   const [score, setScore] = useState<number | null>(null);
   const [retry, setRetry] = useState(false);
   const [tries, setTries] = useState(0);
-  const [feedback, setFeedback] = useState<{ missing: string[]; extra: string[] }>({
-    missing: [],
-    extra: [],
-  });
 
   const check = () => {
     const clean = value.trim().replace(/\s+/g, " ");
@@ -764,7 +760,6 @@ function WriteStep({
         : Math.round(Math.max(0, content * 0.6 + order * 0.4 - pool.length * 0.05) * 100) / 100;
     const attemptCount = tries + 1;
     setTries(attemptCount);
-    setFeedback({ missing, extra: pool });
     // One honest retry before the answer is revealed; a retry never inflates
     // the stored mastery.
     if (result < 0.9 && attemptCount === 1) {
