@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ChevronRight, Layers, Plus } from "lucide-react";
+import { ChevronRight, Layers, Plus, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppShell, PageTitle } from "@/components/verba/AppShell";
 import { useLearner } from "@/components/verba/AppGate";
@@ -39,10 +41,61 @@ function SetsPage() {
     queryKey: ["sets", deviceId, learner.learning_language],
     queryFn: () => listSets(deviceId, learner.learning_language),
   });
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  // Case/diacritic-insensitive partial match on the set name; works for Arabic too.
+  const fold = (v: string) => v.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase().trim();
+  const shown = useMemo(() => {
+    const q = fold(query);
+    return !sets || !q ? sets : sets.filter((s) => fold(s.name).includes(q));
+  }, [sets, query]);
+  const closeSearch = () => {
+    setQuery("");
+    setSearching(false);
+  };
 
   return (
     <AppShell>
-      <PageTitle title={t("sets.title")} subtitle={t("sets.subtitle")} />
+      <div className="flex items-start justify-between gap-3">
+        <PageTitle title={t("sets.title")} subtitle={t("sets.subtitle")} />
+        {sets && sets.length > 0 ? (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="shrink-0 rounded-full"
+            aria-label={searching ? t("sets.clearSearch") : t("sets.search")}
+            onClick={() => (searching ? closeSearch() : setSearching(true))}
+          >
+            {searching ? <X className="size-5" /> : <Search className="size-5" />}
+          </Button>
+        ) : null}
+      </div>
+      {searching ? (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            autoFocus
+            type="search"
+            dir="auto"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("sets.searchPlaceholder")}
+            aria-label={t("sets.search")}
+            className="h-11 rounded-2xl ps-9 pe-10"
+          />
+          {query ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute end-1 top-1/2 size-9 -translate-y-1/2 rounded-full"
+              aria-label={t("sets.clearSearch")}
+              onClick={() => setQuery("")}
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {sets === undefined ? (
         <div className="space-y-3">
@@ -60,9 +113,13 @@ function SetsPage() {
             </Link>
           </Button>
         </div>
+      ) : shown && shown.length === 0 ? (
+        <p className="card-surface p-6 text-center text-sm text-muted-foreground" role="status">
+          {t("sets.noMatches")}
+        </p>
       ) : (
         <ul className="space-y-3">
-          {sets.map((set) => (
+          {(shown ?? sets).map((set) => (
             <li key={set.id}>
               <Link
                 to="/sets/$setId"
