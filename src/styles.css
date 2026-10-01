@@ -62,8 +62,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-display: "Noto Sans", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Noto Sans", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
   --shadow-glow: var(--shadow-glow);
@@ -185,7 +185,7 @@
   }
 
   :lang(ar) {
-    font-family: "Noto Sans Arabic", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family: "IBM Plex Sans Arabic", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     line-height: 1.75;
   }
 
