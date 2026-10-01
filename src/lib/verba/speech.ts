@@ -8,6 +8,8 @@ import { AuthExpiredError, getFreshAccessToken, recoverSession } from "@/lib/ver
  */
 
 const cache = new Map<string, Promise<string>>();
+/** Part of every cache key so a voice change never reuses old audio. */
+const VOICE = "Kore";
 let current: HTMLAudioElement | null = null;
 
 function languageName(locale: string): string {
@@ -56,7 +58,7 @@ async function synthesize(text: string, locale: string): Promise<string> {
 
 /** Loads (or reuses) the audio for this text. */
 export function loadSpeech(text: string, locale = "en-US"): Promise<string> {
-  const key = `${locale}|${text}`;
+  const key = `${VOICE}|${locale}|${text}`;
   let pending = cache.get(key);
   if (!pending) {
     pending = synthesize(text, locale);
