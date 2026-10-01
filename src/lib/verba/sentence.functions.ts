@@ -21,6 +21,7 @@ const Output = z.object({
   correct: z.boolean(),
   feedback: z.string().min(1),
   corrected: z.string().nullable().default(null),
+  why: z.string().nullable().default(null),
 });
 
 export type SentenceEvaluation = z.infer<typeof Output>;
@@ -33,11 +34,13 @@ export const evaluateSentence = createServerFn({ method: "POST" })
     if (!key) throw new Error("AI is not configured for this project.");
 
     const system = `You are a precise ${data.targetLanguage} teacher. A learner wrote one sentence using a target word.
-Check: the target word (or a correct inflection) is actually used; correct word form; meaning fits; grammar; context; naturalness; comprehensibility.
+Check: grammar, spelling, word usage, sentence structure, and whether the target word (or a correct inflection) is used naturally and with a fitting meaning.
+Preserve the learner's intended meaning. Distinguish genuine errors from acceptable alternative expressions: valid alternatives are NOT errors.
 "correct" is true only if the word is used correctly AND the sentence is grammatical and understandable (tiny style issues are OK).
-"feedback": 1-2 short sentences written ONLY in ${data.nativeLanguage}.
-"corrected": a natural corrected ${data.targetLanguage} sentence when changes are needed, else null.
-Return JSON only: {"uses_word":bool,"correct":bool,"feedback":"","corrected":null}`;
+"feedback": a concise explanation, written ONLY in ${data.nativeLanguage}, naming the specific mistakes in THIS sentence (quote the wrong parts). If there are no mistakes, briefly confirm what is done well.
+"corrected": a natural corrected ${data.targetLanguage} sentence that keeps the learner's meaning when changes are needed, else null.
+"why": when corrected is not null, one short sentence in ${data.nativeLanguage} explaining why the corrected version is more appropriate; else null.
+Return JSON only: {"uses_word":bool,"correct":bool,"feedback":"","corrected":null,"why":null}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
