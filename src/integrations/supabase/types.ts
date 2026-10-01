@@ -412,6 +412,50 @@ export type Database = {
           },
         ]
       }
+      sentence_attempts: {
+        Row: {
+          corrected: string | null
+          created_at: string
+          device_id: string
+          explanation: string
+          id: string
+          is_correct: boolean
+          sentence: string
+          training_session_id: string | null
+          word_id: string
+        }
+        Insert: {
+          corrected?: string | null
+          created_at?: string
+          device_id?: string
+          explanation: string
+          id?: string
+          is_correct: boolean
+          sentence: string
+          training_session_id?: string | null
+          word_id: string
+        }
+        Update: {
+          corrected?: string | null
+          created_at?: string
+          device_id?: string
+          explanation?: string
+          id?: string
+          is_correct?: boolean
+          sentence?: string
+          training_session_id?: string | null
+          word_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sentence_attempts_word_id_fkey"
+            columns: ["word_id"]
+            isOneToOne: false
+            referencedRelation: "words"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sentences: {
         Row: {
           created_at: string

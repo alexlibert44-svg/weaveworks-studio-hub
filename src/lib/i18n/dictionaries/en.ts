@@ -381,6 +381,16 @@ export const en = {
   "profile.pointsTotal": "Total points",
   "profile.sessions": "Completed sessions",
   "profile.accuracy": "Overall accuracy",
+  "review.inviteTitle": "It's time to create sentences with your words!",
+  "review.inviteBody": "Practice using your vocabulary in real-life contexts. AI will review your sentences and help you understand and correct your mistakes.",
+  "review.startSentences": "Start Creating Sentences",
+  "review.skipToResults": "Skip and View Results",
+  "review.skipWord": "Skip Word",
+  "review.tryAgain": "Try Again",
+  "review.yourSentence": "Your sentence",
+  "review.whyBetter": "Why this is better",
+  "review.submitSentence": "Check my sentence",
+  "review.mistakes": "What to fix",
 } as const;
 
 export type MessageKey = keyof typeof en;
