@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PasswordInput, authErrorKey } from "@/components/verba/PasswordInput";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -51,13 +52,15 @@ function AuthPage() {
     setBusy(true);
     setError(null);
     setNotice(null);
+    // The auth service stores emails lowercased; trim stray spaces from autofill/paste.
+    const cleanEmail = email.trim().toLowerCase();
     try {
       if (mode === "signin") {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+        const { error: err } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (err) throw err;
       } else if (mode === "signup") {
         const { data, error: err } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
             emailRedirectTo: window.location.origin,
@@ -65,16 +68,19 @@ function AuthPage() {
           },
         });
         if (err) throw err;
+        // An existing email comes back as a user with no identities instead of an error.
+        if (data.user && data.user.identities?.length === 0) throw { code: "user_already_exists" };
         if (!data.session) setNotice(t("auth.checkEmail"));
       } else {
-        const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (err) throw err;
         setNotice(t("auth.resetSent"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      console.error("Auth error", (err as { code?: string })?.code ?? err);
+      setError(t(authErrorKey(err) as Parameters<typeof t>[0]));
     } finally {
       setBusy(false);
     }
@@ -143,9 +149,8 @@ function AuthPage() {
           </Field>
           {mode !== "forgot" ? (
             <Field label={t("auth.password")} id="password">
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={6}
                 dir="ltr"
@@ -154,6 +159,7 @@ function AuthPage() {
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 className="h-11"
               />
+              {mode === "signup" ? <p className="mt-1.5 text-xs text-muted-foreground">{t("auth.pwHint")}</p> : null}
             </Field>
           ) : null}
 

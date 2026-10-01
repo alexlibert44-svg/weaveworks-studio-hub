@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { PasswordInput, authErrorKey } from "@/components/verba/PasswordInput";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -52,7 +53,7 @@ function ResetPasswordPage() {
     setError(null);
     const { error: err } = await supabase.auth.updateUser({ password });
     setBusy(false);
-    if (err) setError(err.message);
+    if (err) setError(t(authErrorKey(err) as Parameters<typeof t>[0]));
     else {
       setDone(true);
       setTimeout(() => void navigate({ to: "/", replace: true }), 1200);
@@ -69,11 +70,11 @@ function ResetPasswordPage() {
         <form onSubmit={submit} className="card-surface space-y-4 p-5">
           <div>
             <label htmlFor="pw" className="text-sm font-semibold">{t("auth.newPassword")}</label>
-            <Input id="pw" type="password" required minLength={6} dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
+            <PasswordInput id="pw" required minLength={6} dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
           </div>
           <div>
             <label htmlFor="pw2" className="text-sm font-semibold">{t("auth.confirmPassword")}</label>
-            <Input id="pw2" type="password" required minLength={6} dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
+            <PasswordInput id="pw2" required minLength={6} dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
           </div>
           {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
           {done ? <p className="rounded-xl bg-primary-soft p-3 text-sm text-primary-deep">{t("auth.passwordUpdated")}</p> : null}
