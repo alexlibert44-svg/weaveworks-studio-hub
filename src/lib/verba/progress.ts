@@ -62,7 +62,7 @@ export interface SkillAttempt {
 }
 
 /** Mastery rule for each required skill, evaluated independently. */
-export const MASTERY_RULE = { successes: 5, latest: 5, sessions: 3 } as const;
+export const MASTERY_RULE = { sessions: 6 } as const;
 
 const SESSION_PREFIX = /^\[s:([^\]]+)\]\s?/;
 
@@ -89,19 +89,18 @@ export interface SkillMastery {
   mastered: boolean;
 }
 
-/** Applies the exact mastery rule to one skill's stored attempt history. */
+/**
+ * A skill is mastered only after correct answers in at least six distinct
+ * training sessions, and only while its most recent answer is correct.
+ * Retries inside one session never count as extra sessions.
+ */
 export function skillMastery(skill: Skill, attempts: SkillAttempt[]): SkillMastery {
   const own = attempts
     .filter((a) => a.skill === skill)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const successes = own.filter((a) => a.is_correct).length;
-  const latest = own.slice(0, MASTERY_RULE.latest);
-  const latestSessions = new Set(latest.map(attemptSession)).size;
-  const mastered =
-    successes >= MASTERY_RULE.successes &&
-    latest.length === MASTERY_RULE.latest &&
-    latest.every((a) => a.is_correct) &&
-    latestSessions >= MASTERY_RULE.sessions;
+  const successSessions = new Set(own.filter((a) => a.is_correct).map(attemptSession)).size;
+  const mastered = successSessions >= MASTERY_RULE.sessions && own[0]?.is_correct === true;
   return {
     skill,
     attempts: own.length,
@@ -109,6 +108,11 @@ export function skillMastery(skill: Skill, attempts: SkillAttempt[]): SkillMaste
     sessions: new Set(own.map(attemptSession)).size,
     mastered,
   };
+}
+
+/** Shown progress never reads as complete until the mastery rule is met. */
+export function displayProgress(value: number, mastered: boolean): number {
+  return mastered ? 100 : Math.min(Math.round(value), 95);
 }
 
 /** New = no graded attempt in any required skill; Mastered = every required skill meets the rule. */

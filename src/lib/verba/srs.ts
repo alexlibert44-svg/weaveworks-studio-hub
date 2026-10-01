@@ -54,9 +54,10 @@ export function schedule(item: LearningItem, score: number): ScheduleUpdate {
   const difficulty = clamp(passed ? item.difficulty - 0.05 : item.difficulty + 0.1, 0.05, 1);
 
   // Mastery moves gradually, so a single correct answer never "masters" an item.
-  const target = passed ? 100 : 0;
-  const weight = passed ? 0.22 * (0.6 + score * 0.4) : 0.3;
-  const mastery = clamp(item.mastery + (target - item.mastery) * weight, 0, 100);
+  // A wrong answer never moves progress: it stays exactly where it was.
+  const mastery = passed
+    ? clamp(item.mastery + (100 - item.mastery) * 0.22 * (0.6 + score * 0.4), 0, 100)
+    : Number(item.mastery);
 
   const base = INTERVALS[Math.min(streak, INTERVALS.length - 1)] ?? 1;
   const intervalDays = passed ? round2(base * (ease / 2.5)) : 0;

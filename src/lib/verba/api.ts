@@ -521,6 +521,19 @@ export async function recordAttempt(
   sessionId?: string,
 ): Promise<LearningItem> {
   const update = schedule(item, score);
+  if (sessionId && score >= 0.6) {
+    // Retrying an exercise in the same session never adds progress twice.
+    const { count } = await supabase
+      .from("practice_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("learning_item_id", item.id)
+      .eq("training_session_id", sessionId)
+      .eq("is_correct", true);
+    if ((count ?? 0) > 0) {
+      update.mastery = Number(item.mastery);
+      update.state = item.state;
+    }
+  }
   const [{ data, error }] = await Promise.all([
     supabase.from("learning_items").update(update).eq("id", item.id).select("*").single(),
     supabase.from("practice_attempts").insert({

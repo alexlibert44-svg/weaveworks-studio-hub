@@ -12,6 +12,7 @@ import { getWord } from "@/lib/verba/api";
 import { posLabel } from "@/lib/verba/pos";
 import {
   UNIT_SKILLS,
+  displayProgress,
   skillMastery,
   unitProgress,
   wordSkillItems,
@@ -66,7 +67,7 @@ function WordDetail() {
   const locale = speechLocale(set.target_language);
   const example = sentences.find((s) => s.form === "base") ?? sentences[0];
   const skillItems = wordSkillItems(items, word.id);
-  const mastery = unitProgress(skillItems, UNIT_SKILLS);
+  const mastery = displayProgress(unitProgress(skillItems, UNIT_SKILLS), wordStatus(attempts) === "mastered");
   const status = wordStatus(attempts);
 
   return (
@@ -109,8 +110,8 @@ function WordDetail() {
         <ul className="mt-4 space-y-3">
           {UNIT_SKILLS.map((skill) => {
             const item = skillItems.find((i) => i.skill === skill);
-            const value = Math.round(Number(item?.mastery ?? 0));
             const m = skillMastery(skill, attempts);
+            const value = displayProgress(Number(item?.mastery ?? 0), m.mastered);
             return (
               <li key={skill}>
                 <div className="flex items-center justify-between gap-2">
@@ -138,7 +139,6 @@ function WordDetail() {
             );
           })}
         </ul>
-        <p className="mt-3 text-[0.7rem] text-muted-foreground">{t("word.masteryRule")}</p>
       </div>
 
       <Button asChild size="lg" className="mt-4 w-full rounded-2xl">
