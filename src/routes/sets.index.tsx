@@ -75,7 +75,8 @@ function SetsPage() {
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             autoFocus
-            type="search"
+            type="text"
+            inputMode="search"
             dir="auto"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

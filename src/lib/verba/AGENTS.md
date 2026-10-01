@@ -1,5 +1,6 @@
-- Mastery derives from `practice_attempts` (5+ correct, latest 5 correct, 3+ sessions per skill); session id tagged in `response` as `[s:<id>]`.
+- Mastery derives from `practice_attempts` (correct answers in 6+ distinct sessions and latest correct, per skill); wrong answers never change stored progress; one progress gain per item per session; session id tagged in `response` as `[s:<id>]`.
 - Word analysis (translation, sentences, items, `meaning_options` on words/forms) runs only at creation or explicit retry in `analysis.ts`; `analysis_status` pending/ready/failed. Why: training never calls AI for meanings.
 - Meaning distractors come from `getMeaningQuestion` (validated, 3 retries); correct answer = saved meaning.
 - Results live in `training_sessions`, completed only by `complete_training_session` (first attempt per item, no recognition, points = round(acc×20), idempotent); streak = consecutive `local_day`s with answered completed sessions.
 - Review completes (`complete_review_session` + training results) as soon as standard exercises end; the sentence invite/writing step is optional, runs after, and saves only to `sentence_attempts` (never points/mastery/schedule).
+- Sentence word hints use index-keyed alignment (`word_glosses` v3) saved on the sentence; unmatched words resolve individually.
