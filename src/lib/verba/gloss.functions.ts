@@ -18,7 +18,7 @@ const Input = z.object({
 });
 
 const Gloss = z.object({ word: z.string(), meaning: z.string().nullable() });
-export type WordGloss = z.infer<typeof Gloss> & { i: number; tried?: boolean };
+export type WordGloss = z.infer<typeof Gloss> & { i: number; tried?: boolean | undefined };
 const SavedV2 = z.object({ v: z.literal(2), words: z.array(Gloss).min(1) });
 const SavedV3 = z.object({
   v: z.literal(3),
