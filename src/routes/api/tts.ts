@@ -3,8 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 /**
- * Real text-to-speech for words and sentences. Returns a WAV file so the
- * browser plays genuine synthesized audio in the requested language.
+ * Speech audio for words and sentences. Served from persistent storage; the
+ * TTS model is called only when no stored copy exists yet (then stored).
  * Signed-in learners only.
  */
 const Body = z.object({
@@ -33,39 +33,21 @@ export const Route = createFileRoute("/api/tts")({
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return new Response("Invalid request", { status: 400 });
 
-        const key = process.env["LOVABLE_API_KEY"];
-        if (!key) return new Response("Audio is not configured", { status: 500 });
-
-        const upstream = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-3.1-flash-tts-preview",
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    // Only the quoted text is spoken: no translation, no added words.
-                    text: `Speak the text between <say> tags in ${parsed.data.language}, with native ${parsed.data.language} pronunciation, clearly and at a slightly slow teaching pace. Say exactly that text, word for word: do not translate it, do not read the tags, and do not add anything.\n<say>${parsed.data.text}</say>`,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } },
+        const { ensureAudio, readAudio } = await import("@/lib/verba/tts.server");
+        try {
+          const { path, generated } = await ensureAudio(parsed.data.text, parsed.data.language);
+          const blob = await readAudio(path);
+          return new Response(blob, {
+            headers: {
+              "content-type": blob.type || "audio/wav",
+              "cache-control": "private, max-age=31536000, immutable",
+              "x-audio-source": generated ? "generated" : "stored",
             },
-            stream_format: "audio",
-          }),
-        });
-        return new Response(upstream.body, {
-          status: upstream.status,
-          headers: {
-            "content-type": upstream.headers.get("content-type") ?? "audio/wav",
-            "cache-control": "no-cache",
-          },
-        });
+          });
+        } catch (e) {
+          const status = (e as { status?: number }).status ?? 502;
+          return new Response("Audio unavailable", { status });
+        }
       },
     },
   },

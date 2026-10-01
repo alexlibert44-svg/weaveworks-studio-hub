@@ -1,15 +1,28 @@
-import { useServerFn } from "@tanstack/react-start";
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useI18n } from "@/lib/i18n";
-import { language } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
-import { getWordGlosses, type WordGloss } from "@/lib/verba/gloss.functions";
-import { handleAuthFailure } from "@/lib/verba/session-token";
 import type { Sentence } from "@/lib/verba/types";
 
 const clean = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}'’-]/gu, "");
+
+type WordGloss = { i: number; word: string; meaning: string | null };
+
+/** Builds the per-word mapping from the alignment saved when the sentence was generated. */
+function hintGlosses(text: string, hints: unknown): WordGloss[] | null {
+  if (!Array.isArray(hints) || hints.length === 0) return null;
+  const pairs = hints
+    .filter((h): h is { native: string; target: string } => typeof h?.native === "string" && typeof h?.target === "string")
+    .map((h) => ({ words: h.native.split(/\s+/).map(clean).filter(Boolean), target: h.target }));
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, i) => {
+      const w = clean(word);
+      const hit = pairs.find((p) => p.words.includes(w));
+      return { i, word, meaning: hit?.target ?? null };
+    });
+}
 
 /**
  * The learner's-language translation with every word tappable. A tap shows the
@@ -30,20 +43,18 @@ export function TappableSentence({
   hidden?: string | null;
 }) {
   const { t, native } = useI18n();
-  const glossFn = useServerFn(getWordGlosses);
   const [open, setOpen] = useState<number | null>(null);
-  const [glosses, setGlosses] = useState<WordGloss[] | null>(() => {
+  // Stored data only: saved alignment first, otherwise the generation-time word hints. No AI on tap.
+  const glosses = useMemo<WordGloss[] | null>(() => {
     const saved = (sentence as Sentence & { word_glosses?: unknown }).word_glosses as
-      | { v?: number; words?: WordGloss[] }
+      | { v?: number; words?: (Omit<WordGloss, "i"> & { i?: number })[] }
       | null
       | undefined;
-    if (!saved || !Array.isArray(saved.words)) return null;
-    if (saved.v === 3) return saved.words;
-    if (saved.v === 2) return saved.words.map((w, i) => ({ ...w, i }));
-    return null;
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+    if (saved && Array.isArray(saved.words) && (saved.v === 3 || saved.v === 2)) {
+      return saved.words.map((w, i) => ({ i: w.i ?? i, word: w.word, meaning: w.meaning }));
+    }
+    return hintGlosses(text, (sentence as Sentence & { word_hints?: unknown }).word_hints);
+  }, [sentence, text]);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,45 +79,6 @@ export function TappableSentence({
     return list.find((g) => clean(g.word) === word && g.meaning) ?? list.find((g) => clean(g.word) === word) ?? null;
   };
 
-  const load = async (tokenIndex: number) => {
-    if (loading) return;
-    const known = glossFor(glosses, tokenIndex);
-    // Saved match, or a word already checked and genuinely without one: nothing to fetch.
-    if (glosses && known && (known.meaning || known.tried)) return;
-    setLoading(true);
-    setError(false);
-    try {
-      const result = await glossFn({
-        data: {
-          sentenceId: sentence.id,
-          targetLanguage: language(locale.split("-")[0] ?? locale).english,
-          nativeLanguage: native.english,
-          ...(known ? { resolve: known.i } : {}),
-        },
-      });
-      let next = result;
-      const found = glossFor(result, tokenIndex);
-      if (found && !found.meaning && !found.tried) {
-        // First pass left this word unmatched: resolve just this word.
-        next = await glossFn({
-          data: {
-            sentenceId: sentence.id,
-            targetLanguage: language(locale.split("-")[0] ?? locale).english,
-            nativeLanguage: native.english,
-            resolve: found.i,
-          },
-        });
-      }
-      setGlosses(next);
-    } catch (cause) {
-      // Renew an expired sign-in silently; the hint simply retries next tap.
-      await handleAuthFailure(cause);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const meaningFor = (tokenIndex: number): string | null => glossFor(glosses, tokenIndex)?.meaning ?? null;
 
   return (
@@ -123,7 +95,6 @@ export function TappableSentence({
                 type="button"
                 onClick={() => {
                   setOpen(active ? null : index);
-                  void load(index);
                 }}
                 aria-expanded={active}
                 className={cn(
@@ -138,20 +109,12 @@ export function TappableSentence({
                   role="status"
                   className="absolute start-0 top-full z-20 mt-1 w-max max-w-[14rem] rounded-xl border border-border bg-popover px-3 py-1.5 text-sm font-semibold whitespace-normal text-primary-deep shadow-card"
                 >
-                  {loading ? (
-                    <Loader2 className="size-4 animate-spin text-primary" />
-                  ) : error ? (
-                    <button type="button" className="text-destructive" onClick={() => void load(index)}>
-                      {t("audio.retry")}
-                    </button>
-                  ) : (
-                    (() => {
+                  {(() => {
                       const match = meaningFor(index);
                       if (!match) return t("train.noMeaning");
                       if (hidden && clean(match).includes(clean(hidden))) return t("train.answerHidden");
                       return <span lang={locale.split("-")[0]} dir="auto">{match}</span>;
-                    })()
-                  )}
+                    })()}
                 </span>
               ) : null}
             </span>

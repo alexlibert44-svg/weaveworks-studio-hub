@@ -3,5 +3,6 @@
 - Meaning distractors come from `getMeaningQuestion` (validated, 3 retries); correct answer = saved meaning.
 - Results live in `training_sessions`, completed only by `complete_training_session` (first attempt per item, no recognition, points = round(acc×20), idempotent); streak = consecutive `local_day`s with answered completed sessions.
 - Review completes (`complete_review_session` + training results) as soon as standard exercises end; the sentence invite/writing step is optional, runs after, and saves only to `sentence_attempts` (never points/mastery/schedule).
-- Sentence word hints use index-keyed alignment (`word_glosses` v3) saved on the sentence; unmatched words resolve individually.
+- Sentence word taps read only stored data (`word_glosses` if saved, else generation-time `word_hints`); never call AI on tap.
+- Speech audio is cached in `audio_assets` + private `speech-audio` bucket keyed by sha256(voice|language|text), generated during word analysis via `prepareAudio`; `/api/tts` serves stored files and only synthesizes on a miss. Why: no repeated TTS cost.
 - Review schedule: first-attempt accuracy of graded answers (recognition excluded) → strong ≥85%/moderate ≥60%/poor; ladder 3/7/14/30/60/120/180/270/365; long delay never advances; poor twice → stage 1; next = completion time + interval.

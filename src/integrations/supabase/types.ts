@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audio_assets: {
+        Row: {
+          cache_key: string
+          created_at: string
+          error: string | null
+          language: string
+          status: string
+          storage_path: string | null
+          text: string
+          updated_at: string
+          voice: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          error?: string | null
+          language: string
+          status?: string
+          storage_path?: string | null
+          text: string
+          updated_at?: string
+          voice: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          error?: string | null
+          language?: string
+          status?: string
+          storage_path?: string | null
+          text?: string
+          updated_at?: string
+          voice?: string
+        }
+        Relationships: []
+      }
       daily_progress: {
         Row: {
           day: string
