@@ -313,6 +313,7 @@ export function Session({
           key={`m-${attempt}-${unit.word.id}`}
           unit={unit}
           units={units}
+          onSkip={next}
           locale={locale}
           onDone={(correct, response) => {
             record("recall", correct ? 1 : 0.2, response);
@@ -854,11 +855,13 @@ function MeaningStep({
   units,
   locale,
   onDone,
+  onSkip,
 }: {
   unit: WordUnit;
   units: WordUnit[];
   locale: string;
   onDone: (correct: boolean, response: string) => void;
+  onSkip: () => void;
 }) {
   const { t } = useI18n();
   const { learner } = useLearner();
