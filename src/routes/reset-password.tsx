@@ -69,12 +69,12 @@ function ResetPasswordPage() {
       ) : (
         <form onSubmit={submit} className="card-surface space-y-4 p-5">
           <div>
-            <label htmlFor="pw" className="text-sm font-semibold">{t("auth.newPassword")}</label>
-            <PasswordInput id="pw" required minLength={6} dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
+            <label htmlFor="pw" className="mb-1.5 block text-sm font-semibold">{t("auth.newPassword")}</label>
+            <PasswordInput id="pw" required minLength={6} dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="h-11" />
           </div>
           <div>
-            <label htmlFor="pw2" className="text-sm font-semibold">{t("auth.confirmPassword")}</label>
-            <PasswordInput id="pw2" required minLength={6} dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" className="mt-1.5 h-11" />
+            <label htmlFor="pw2" className="mb-1.5 block text-sm font-semibold">{t("auth.confirmPassword")}</label>
+            <PasswordInput id="pw2" required minLength={6} dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" className="h-11" />
           </div>
           {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
           {done ? <p className="rounded-xl bg-primary-soft p-3 text-sm text-primary-deep">{t("auth.passwordUpdated")}</p> : null}
