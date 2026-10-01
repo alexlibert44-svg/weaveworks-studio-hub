@@ -11,7 +11,6 @@ import {
   Check,
   Loader2,
   Mic,
-  PartyPopper,
   Play,
   RotateCcw,
   X,
@@ -36,13 +35,8 @@ import { SpeakButton } from "@/components/verba/SpeakButton";
 import { TappableSentence } from "@/components/verba/TappableSentence";
 import { normalize, similarity } from "@/lib/verba/srs";
 import type { Exercise, LearningItem, Sentence, Skill, Word } from "@/lib/verba/types";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2 as MeaningSpinner } from "lucide-react";
 import { useLearner } from "@/components/verba/AppGate";
-import { getMeaningQuestion, type MeaningQuestion } from "@/lib/verba/meaning.functions";
-
-/** Distractors already shown per word this visit, so repeats are avoided. */
-const usedDistractors = new Map<string, string[]>();
 
 /** Builds a cloze prompt by hiding the target word inside its sentence. */
 export function cloze(sentence: string, word: string) {
@@ -135,7 +129,7 @@ export function Session({
   const [index, setIndex] = useState(() => Math.min(initialIndex, Math.max(exercises.length - 1, 0)));
   const [step, setStep] = useState<Step>("recognition");
   const [done, setDone] = useState(false);
-  const [stats, setStats] = useState({
+  const [, setStats] = useState({
     writeCorrect: 0,
     writeTotal: 0,
     meaningCorrect: 0,
@@ -335,14 +329,6 @@ export function Session({
   );
 }
 
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-bold text-primary">{value}</span>
-    </div>
-  );
-}
 
 /* --------------------------------- audio ---------------------------------- */
 
@@ -876,58 +862,22 @@ function MeaningStep({
 }) {
   const { t } = useI18n();
   const { learner } = useLearner();
-  const fetchQuestion = useServerFn(getMeaningQuestion);
   const correct = unit.word.translation ?? unit.word.meaning ?? "";
   const [picked, setPicked] = useState<string | null>(null);
-  const [question, setQuestion] = useState<MeaningQuestion | null>(null);
-  const [options, setOptions] = useState<string[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loadKey, setLoadKey] = useState(0);
   void units;
-
-  useEffect(() => {
-    if (!correct) return;
-    let cancelled = false;
-    setQuestion(null);
-    setLoadError(null);
-    const targetLanguage =
-      new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] ?? locale) ?? locale;
-    fetchQuestion({
-      data: {
-        word: unit.word.text,
-        correct,
-        partOfSpeech: unit.word.part_of_speech ?? null,
-        context: unit.sentence?.text ?? null,
-        targetLanguage,
-        nativeLanguage: learner.native_language,
-        avoid: usedDistractors.get(unit.word.id) ?? [],
-      },
-    })
-      .then((q) => {
-        if (cancelled) return;
-        usedDistractors.set(unit.word.id, [
-          ...(usedDistractors.get(unit.word.id) ?? []),
-          ...q.distractors.map((d) => d.text),
-        ].slice(-20));
-        // Real random position for the correct answer, fixed for this question.
-        const all = [correct, ...q.distractors.map((d) => d.text)];
-        for (let i = all.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [all[i], all[j]] = [all[j] as string, all[i] as string];
-        }
-        setOptions(all);
-        setQuestion(q);
-      })
-      .catch(async (e: unknown) => {
-        if (cancelled) return;
-        const needsSignIn = await handleAuthFailure(e);
-        setLoadError(needsSignIn ? t("auth.expired") : e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unit.word.id, correct, loadKey]);
+  void learner;
+  // Options were generated and saved when the set was created; training never calls AI here.
+  const saved = (unit.word.meaning_options ?? []).filter((o) => o && o !== correct).slice(0, 3);
+  const question = correct && saved.length >= 3 ? true : null;
+  const loadError = question ? null : t("train.meaningMissing");
+  const [options] = useState<string[]>(() => {
+    const all = [correct, ...saved];
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j] as string, all[i] as string];
+    }
+    return all;
+  });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -943,8 +893,8 @@ function MeaningStep({
         loadError ? (
           <div className="mt-6 text-center" role="alert">
             <p className="text-sm text-destructive">{loadError}</p>
-            <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => setLoadKey((k) => k + 1)}>
-              <RotateCcw className="size-4" /> {t("train.meaningRetry")}
+            <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => onSkip()}>
+              {t("common.next")} <ArrowRight className="size-4 rtl:rotate-180" />
             </Button>
           </div>
         ) : (
