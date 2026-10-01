@@ -9,7 +9,7 @@ import { completeTrainingSession, startTrainingSession, type TrainingResult } fr
 
 import { Button } from "@/components/ui/button";
 import { useLearner } from "@/components/verba/AppGate";
-import { SentencePractice } from "@/components/verba/SentencePractice";
+import { SentenceInvite, SentencePractice } from "@/components/verba/SentencePractice";
 import { Session } from "@/components/verba/Session";
 import { useI18n } from "@/lib/i18n";
 import { language, speechLocale } from "@/lib/i18n/languages";
@@ -169,12 +169,13 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [phaseOverride, setPhaseOverride] = useState<"sentences" | "done" | null>(null);
+  const [phaseOverride, setPhaseOverride] = useState<"invite" | "sentences" | "done" | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [outcome, setOutcome] = useState<ReviewOutcome | null>(null);
   const [training, setTraining] = useState<{ id: string; seconds: number; sentencesFrom: number } | null>(null);
   const [result, setResult] = useState<TrainingResult | null>(null);
+  const finishAllRef = useRef<((info: { id: string; seconds: number; sentencesFrom: number } | null) => Promise<void>) | null>(null);
   const [resultError, setResultError] = useState<string | null>(null);
   const { learner } = useLearner();
 
@@ -212,6 +213,12 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
     });
   };
 
+  const resumedSentences = !phaseOverride && data?.session?.phase === "sentences";
+  useEffect(() => {
+    // Sessions saved mid-sentences by older versions: units were done, so complete now.
+    if (resumedSentences) void finishAllRef.current?.(null);
+  }, [resumedSentences]);
+
   if (error) throw error;
   if (isPending || !data) return <Spinner />;
   if (data.exercises.length === 0) return <EmptyState />;
@@ -247,7 +254,8 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
     try {
       if (session) setOutcome(await completeReviewSession(session.id));
       refreshAll();
-      setPhaseOverride("done");
+      // Required review is now complete and saved; sentences are optional.
+      setPhaseOverride("invite");
       void saveTraining(info);
     } catch (e) {
       // Never show "complete" unless the schedule was actually saved.
@@ -257,10 +265,12 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
     }
   };
 
-  if (finishError || finishing) {
+  finishAllRef.current = finishAll;
+
+  if (finishError || finishing || resumedSentences) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        {finishing ? (
+        {finishing || resumedSentences ? (
           <Spinner />
         ) : (
           <>
@@ -294,7 +304,11 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
     );
   }
 
-  if (phase === "sentences" && kind === "words") {
+  if (phase === "invite") {
+    return <SentenceInvite onStart={() => setPhaseOverride("sentences")} onSkip={() => setPhaseOverride("done")} />;
+  }
+
+  if (phase === "sentences") {
     return (
       <SentencePractice
         title={setInfo.set.name}
@@ -302,18 +316,8 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
         targetCode={setInfo.set.target_language}
         targetLanguageName={language(setInfo.set.target_language).english}
         nativeLanguageName={language(setInfo.set.native_language).english}
-        initialIndex={session?.phase === "sentences" ? session.position : 0}
-        initialEntries={session?.state.sentences ?? {}}
-        onSave={async (index, entries) => {
-          if (session)
-            await saveSessionProgress(session.id, {
-              phase: "sentences",
-              position: index,
-              state: { ...session.state, sentences: entries },
-            });
-        }}
-        onFinish={() => void finishAll()}
-        onExit={backToSet}
+        trainingId={training?.id ?? null}
+        onFinish={() => setPhaseOverride("done")}
       />
     );
   }
@@ -332,16 +336,8 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
       onFinished={refreshAll}
       onComplete={(info) => {
         const next = { id: info.trainingId, seconds: info.activeSeconds, sentencesFrom: 0 };
-        if (kind === "words") {
-          next.sentencesFrom = Date.now();
-          setTraining(next);
-          if (session)
-            void saveSessionProgress(session.id, { phase: "sentences", position: 0 }).catch(() => undefined);
-          setPhaseOverride("sentences");
-        } else {
-          setTraining(next);
-          void finishAll(next);
-        }
+        setTraining(next);
+        void finishAll(next);
       }}
       onExit={backToSet}
     />
