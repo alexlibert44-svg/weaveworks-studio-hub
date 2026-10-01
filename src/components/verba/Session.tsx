@@ -820,16 +820,6 @@ function WriteStep({
       {retry ? (
         <div className="mt-4 rounded-lg bg-accent-soft px-4 py-3 text-sm font-semibold text-secondary-foreground" role="status">
           <p>{t("train.tryAgain")}</p>
-          {feedback.missing.length > 0 ? (
-            <p className="mt-1 text-xs">
-              {t("train.writeMissing")}: {feedback.missing.length}
-            </p>
-          ) : null}
-          {feedback.extra.length > 0 ? (
-            <p className="mt-1 text-xs">
-              {t("train.writeExtra")}: {feedback.extra.join(" · ")}
-            </p>
-          ) : null}
         </div>
       ) : null}
 
