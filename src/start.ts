@@ -4,6 +4,7 @@ import { renderErrorPage } from "./lib/error-page";
 // Project-specific bearer middleware: it renews an expired token before the
 // call, so server functions no longer fail with "Unauthorized: Invalid token".
 import { attachFreshSupabaseAuth } from "@/lib/verba/auth-attach";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -28,6 +29,6 @@ const csrfMiddleware = createCsrfMiddleware({
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachFreshSupabaseAuth],
+  functionMiddleware: [attachSupabaseAuth, attachFreshSupabaseAuth],
   requestMiddleware: [errorMiddleware, csrfMiddleware],
 }));
