@@ -14,3 +14,6 @@
 - [x] Verify language-isolated sets, review, progress, photo editing and mobile layouts in a signed-in browser.
 - [x] Fix Home language list touch scrolling and reuse the selector in Settings without changing saved language data.
 - [x] Refine the Profile photo ring and shared light-blue buttons; verify mobile, language independence, and touch interaction.
+- [x] Improve shared multilingual typography and font rendering across the app.
+- [x] Cap the Home daily-goal count and percentage at the configured target.
+- [x] Remove resize handles and extra focus-border artifacts from exercise textareas.
