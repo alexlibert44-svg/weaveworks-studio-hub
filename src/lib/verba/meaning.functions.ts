@@ -59,13 +59,14 @@ export const getMeaningQuestion = createServerFn({ method: "POST" })
     if (!key) throw new Error("AI is not configured for this project.");
     const system = `You write distractors for a vocabulary multiple-choice question for a learner of ${data.targetLanguage} whose native language is ${data.nativeLanguage}.
 The learner sees the ${data.targetLanguage} word and must pick its meaning. The correct option is fixed (given below) — do not change it.
+This is a direct TRANSLATION quiz: every option is a short ${data.nativeLanguage} translation (usually 1-3 words), never a definition or explanation.
 Write 5 WRONG options in ${data.nativeLanguage}:
-- Real, plausible meanings of OTHER ${data.targetLanguage} words (same part of speech and similar difficulty; ideally words a learner could confuse by form or topic).
+- Direct translations of OTHER ${data.targetLanguage} words (same part of speech and similar difficulty; ideally words a learner could confuse by form or topic).
 - Each must be clearly WRONG for this word in the given context — never a synonym, paraphrase, or any other legitimate meaning of the target word (including meanings in other contexts or parts of speech).
 - Match the correct option's length, style and formatting so length gives no hint. No absurd options, no duplicates.
 - Avoid these previously used options when possible: ${(data.avoid ?? []).join(" | ") || "none"}.
-For each give "why": one short ${data.nativeLanguage} sentence on why it doesn't fit here.
-"explanation": one or two short ${data.nativeLanguage} sentences explaining the correct meaning of the word in this context.
+For each give "why": a few ${data.nativeLanguage} words on why it doesn't fit.
+"explanation": a very short ${data.nativeLanguage} phrase (internal use).
 Return JSON only: {"distractors":[{"text":"","why":""}],"explanation":""}`;
     const user = `Word: ${data.word}${data.partOfSpeech ? ` (${data.partOfSpeech})` : ""}
 Correct meaning: ${data.correct}${data.context ? `\nContext sentence: ${data.context}` : ""}`;

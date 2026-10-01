@@ -11,6 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { createSet } from "@/lib/verba/api";
 
 const MIN_WORDS = 4;
+const MAX_WORDS = 10;
 
 export const Route = createFileRoute("/add")({
   head: () => ({
@@ -48,7 +49,7 @@ function AddPage() {
   // disabled after the learner types their fourth word.
   const pending = draft.trim();
   const allWords =
-    pending && !words.some((w) => w.toLowerCase() === pending.toLowerCase())
+    pending && words.length < MAX_WORDS && !words.some((w) => w.toLowerCase() === pending.toLowerCase())
       ? [...words, pending]
       : words;
 
@@ -73,6 +74,10 @@ function AddPage() {
   const addWord = () => {
     const value = draft.trim();
     if (!value) return;
+    if (words.length >= MAX_WORDS) {
+      setNotice(t("add.max", { max: MAX_WORDS }));
+      return;
+    }
     if (words.some((w) => w.toLowerCase() === value.toLowerCase())) {
       setNotice(t("add.duplicate"));
       return;
@@ -125,11 +130,13 @@ function AddPage() {
             }
           }}
           placeholder={t("add.wordPlaceholder")}
+          disabled={words.length >= MAX_WORDS}
           lang={learner.learning_language}
           className="h-12 rounded-2xl"
         />
         <Button
           onClick={addWord}
+          disabled={words.length >= MAX_WORDS}
           aria-label={t("add.addWord")}
           className="size-12 shrink-0 rounded-2xl"
         >
@@ -139,7 +146,10 @@ function AddPage() {
       <p className="mt-2 text-xs text-muted-foreground">
         {t("add.count", { count: allWords.length, min: MIN_WORDS })}
       </p>
-      {notice ? <p className="mt-1 text-xs font-semibold text-destructive">{notice}</p> : null}
+      {words.length >= MAX_WORDS ? (
+        <p className="mt-1 text-xs font-semibold text-primary-deep" role="status">{t("add.max", { max: MAX_WORDS })}</p>
+      ) : null}
+      {notice && words.length < MAX_WORDS ? <p className="mt-1 text-xs font-semibold text-destructive">{notice}</p> : null}
 
       <ul className="mt-4 flex flex-wrap gap-2">
         {words.map((word) => (
@@ -168,7 +178,7 @@ function AddPage() {
       <Button
         size="lg"
         className="mt-6 w-full rounded-2xl"
-        disabled={allWords.length < MIN_WORDS || create.isPending}
+        disabled={allWords.length < MIN_WORDS || allWords.length > MAX_WORDS || create.isPending}
         onClick={() => {
           if (create.isPending) return;
           if (pending) {

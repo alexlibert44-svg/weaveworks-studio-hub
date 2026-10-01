@@ -84,6 +84,7 @@ export const fr: Dictionary = {
   "add.count": "{count} sur {min} minimum",
   "add.create": "Créer la liste",
   "add.needMore": "Ajoute d'abord au moins {min} mots.",
+  "add.max": "Ce groupe est complet : {max} mots maximum.",
   "add.duplicate": "Ce mot est déjà dans la liste.",
   "add.generating": "Préparation de tes leçons",
   "add.generatingBody": "Nous écrivons des phrases naturelles, des traductions et des exercices.",
