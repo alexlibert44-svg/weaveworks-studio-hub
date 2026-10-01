@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, Flame, Loader2, Pencil, Settings, User } from "lucide-react";
+import { Camera, Flame, Loader2, Pencil, Settings, Star, User } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { useLearner } from "@/components/verba/AppGate";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { getLanguageStreak, getProfileStats, updateLearner } from "@/lib/verba/api";
+import { getLanguageStreak, getPointsSummary, getProfileStats, updateLearner } from "@/lib/verba/api";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -41,6 +41,11 @@ function ProfilePage() {
   const { data: streak } = useQuery({
     queryKey: ["language-streak", deviceId, learner.learning_language],
     queryFn: () => getLanguageStreak(deviceId, learner.learning_language),
+  });
+
+  const { data: points } = useQuery({
+    queryKey: ["points", deviceId],
+    queryFn: () => getPointsSummary(deviceId),
   });
 
   const avatarPath = learner.avatar_path ?? null;
@@ -160,6 +165,20 @@ function ProfilePage() {
           label={t("profile.statStreak")}
           value={streak ?? 0}
           icon={<Flame className="size-4 text-accent" />}
+        />
+      </ul>
+
+      <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.points")}</h2>
+      <ul className="grid grid-cols-2 gap-2.5">
+        <StatCard
+          label={t("profile.pointsTotal")}
+          value={points?.points ?? 0}
+          icon={<Star className="size-4 text-accent" />}
+        />
+        <StatCard label={t("profile.sessions")} value={points?.sessions ?? 0} />
+        <StatCard
+          label={t("profile.accuracy")}
+          value={points?.accuracy == null ? "—" : `${points.accuracy}%`}
         />
       </ul>
     </AppShell>

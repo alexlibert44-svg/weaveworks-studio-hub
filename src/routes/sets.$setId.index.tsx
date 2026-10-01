@@ -11,6 +11,7 @@ import { MasteryBar, StatePill } from "@/components/verba/MasteryPill";
 import { useI18n } from "@/lib/i18n";
 import { language } from "@/lib/i18n/languages";
 import { createForms, deleteSet, getSet } from "@/lib/verba/api";
+import { prepareSet, wordReady } from "@/lib/verba/analysis";
 import {
   FORM_SKILLS,
   UNIT_SKILLS,
@@ -87,6 +88,11 @@ function SetDetail() {
     },
   });
 
+  const reanalyze = useMutation({
+    mutationFn: () => prepareSet(deviceId, setId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["set", setId] }),
+  });
+
   const generate = useMutation({
     mutationFn: () =>
       createForms({
@@ -116,6 +122,7 @@ function SetDetail() {
   const wordsWithForms = words.filter((w) => forms.some((f) => f.word_id === w.id));
   const formCount = new Set(forms.filter((f) => words.some((w) => w.id === f.word_id)).map((f) => f.id)).size;
   const counts = { words: words.length, forms: formCount };
+  const unready = words.filter((w) => (w.analysis_status ?? "ready") !== "ready" || !w.translation);
 
   return (
     <AppShell>
@@ -169,6 +176,21 @@ function SetDetail() {
 
       {tab === "words" ? (
         <>
+          {unready.length > 0 ? (
+            <div className="card-surface mt-4 p-4 text-sm" role="status">
+              <p className="font-semibold">
+                {reanalyze.isPending ? t("set.analyzing") : t("set.analysisPending", { count: unready.length })}
+              </p>
+              <Button
+                variant="secondary"
+                className="mt-3 w-full rounded-xl"
+                onClick={() => reanalyze.mutate()}
+                disabled={reanalyze.isPending}
+              >
+                {reanalyze.isPending ? <Loader2 className="size-4 animate-spin" /> : null} {t("set.retryAnalysis")}
+              </Button>
+            </div>
+          ) : null}
           <Button asChild size="lg" className="mt-4 w-full rounded-2xl">
             <Link to="/practice" search={{ set: setId, review: "words" }}>
               <Play className="size-4" /> {t("review.reviewWords")}
@@ -196,9 +218,15 @@ function SetDetail() {
                           </span>
                         ) : null}
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {word.translation ?? word.meaning}
-                      </p>
+                      {word.analysis_status === "failed" ? (
+                        <p className="truncate text-xs font-semibold text-destructive">{t("set.analysisFailed")}</p>
+                      ) : !wordReady(word) && !word.translation ? (
+                        <p className="truncate text-xs text-muted-foreground">{t("set.analyzing")}</p>
+                      ) : (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {word.translation ?? word.meaning}
+                        </p>
+                      )}
                       <div className="mt-2 flex items-center gap-2">
                         <MasteryBar value={progress} className="h-1.5" />
                         <span className="text-xs font-bold text-primary">{progress}%</span>

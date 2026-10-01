@@ -1,10 +1,16 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { TrainingResults } from "@/components/verba/TrainingResults";
+import {
+  completeTrainingSession,
+  createActivityClock,
+  startTrainingSession,
+  type TrainingResult,
+} from "@/lib/verba/training";
 import {
   ArrowRight,
   Check,
   Loader2,
   Mic,
-  PartyPopper,
   Play,
   RotateCcw,
   X,
@@ -29,13 +35,8 @@ import { SpeakButton } from "@/components/verba/SpeakButton";
 import { TappableSentence } from "@/components/verba/TappableSentence";
 import { normalize, similarity } from "@/lib/verba/srs";
 import type { Exercise, LearningItem, Sentence, Skill, Word } from "@/lib/verba/types";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2 as MeaningSpinner } from "lucide-react";
 import { useLearner } from "@/components/verba/AppGate";
-import { getMeaningQuestion, type MeaningQuestion } from "@/lib/verba/meaning.functions";
-
-/** Distractors already shown per word this visit, so repeats are avoided. */
-const usedDistractors = new Map<string, string[]>();
 
 /** Builds a cloze prompt by hiding the target word inside its sentence. */
 export function cloze(sentence: string, word: string) {
@@ -102,8 +103,8 @@ interface SessionProps {
   initialIndex?: number;
   /** Called when the learner moves on to the next word (persisted for resumption). */
   onProgress?: (index: number) => void;
-  /** When set, the last word hands control back instead of showing the done screen. */
-  onComplete?: () => void;
+  /** When set, the last word hands control back instead of showing the results screen. */
+  onComplete?: (info: { trainingId: string; activeSeconds: number }) => void;
 }
 
 export function Session({
@@ -122,18 +123,56 @@ export function Session({
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
   const { t } = useI18n();
+  const navigate = useNavigate();
   const units = useMemo(() => buildUnits(exercises), [exercises]);
   const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(() => Math.min(initialIndex, Math.max(exercises.length - 1, 0)));
   const [step, setStep] = useState<Step>("recognition");
   const [done, setDone] = useState(false);
-  const [stats, setStats] = useState({
+  const [, setStats] = useState({
     writeCorrect: 0,
     writeTotal: 0,
     meaningCorrect: 0,
     meaningTotal: 0,
   });
   const startedAt = useRef(Date.now());
+  const clock = useRef<ReturnType<typeof createActivityClock> | null>(null);
+  const started = useRef<Promise<void> | null>(null);
+  const [result, setResult] = useState<TrainingResult | null>(null);
+  const [resultError, setResultError] = useState<string | null>(null);
+
+  const firstItem = exercises[0];
+  const openTraining = useCallback(() => {
+    started.current = startTrainingSession({
+      id: sessionId.current,
+      setId: firstItem?.item.set_id ?? null,
+      kind: firstItem?.word.form_label ? "forms" : "words",
+      targetLanguage,
+    }).catch(() => undefined);
+  }, [firstItem, targetLanguage]);
+
+  useEffect(() => {
+    clock.current = createActivityClock();
+    openTraining();
+    return () => clock.current?.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveResult = useCallback(async () => {
+    setResultError(null);
+    try {
+      await started.current;
+      await startTrainingSession({
+        id: sessionId.current,
+        setId: firstItem?.item.set_id ?? null,
+        kind: firstItem?.word.form_label ? "forms" : "words",
+        targetLanguage,
+      });
+      setResult(await completeTrainingSession(sessionId.current, clock.current?.seconds ?? 0));
+    } catch (e) {
+      setResultError(e instanceof Error ? e.message : String(e));
+    }
+  }, [firstItem, targetLanguage]);
 
   const unit = units[index];
   const total = units.length;
@@ -152,9 +191,13 @@ export function Session({
     const minutes = Math.max(0.5, Math.round(((Date.now() - startedAt.current) / 60000) * 10) / 10);
     void logSession(deviceId, minutes, total, targetLanguage).catch(() => undefined);
     onFinished();
-    if (onComplete) onComplete();
-    else setDone(true);
-  }, [deviceId, onFinished, onComplete, total, targetLanguage]);
+    if (onComplete) {
+      onComplete({ trainingId: sessionId.current, activeSeconds: clock.current?.seconds ?? 0 });
+    } else {
+      setDone(true);
+      void saveResult().then(onFinished);
+    }
+  }, [deviceId, onFinished, onComplete, total, targetLanguage, saveResult]);
 
   const next = () => {
     const position = STEPS.indexOf(step);
@@ -177,45 +220,26 @@ export function Session({
     setDone(false);
     startedAt.current = Date.now();
     sessionId.current = crypto.randomUUID();
+    setResult(null);
+    setResultError(null);
+    clock.current?.reset();
+    openTraining();
     setAttempt((value) => value + 1);
     onRestart?.();
   };
 
   if (done || !unit) {
-    const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <span className="flex size-20 items-center justify-center rounded-lg bg-primary-soft text-primary shadow-card">
-          <PartyPopper className="size-9" />
-        </span>
-        <h1 className="mt-6 text-2xl font-bold">{t("practice.done")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("practice.doneBody", { count: total, minutes })}
-        </p>
-        <div className="card-surface mt-6 w-full space-y-2 p-5 text-start text-sm">
-          <ResultRow label={t("train.resultWords")} value={`${total}`} />
-          <ResultRow
-            label={t("train.resultWriting")}
-            value={`${stats.writeCorrect}/${stats.writeTotal}`}
-          />
-          <ResultRow
-            label={t("train.resultMeaning")}
-            value={`${stats.meaningCorrect}/${stats.meaningTotal}`}
-          />
-        </div>
-        <Button size="lg" className="mt-6 w-full rounded-2xl" onClick={restart}>
-          <RotateCcw className="size-4" /> {t("train.restart")}
-        </Button>
-        {onExit ? (
-          <Button size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl" onClick={onExit}>
-            {t("train.exit")}
-          </Button>
-        ) : (
-          <Button asChild size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl">
-            <Link to="/sets">{t("train.exit")}</Link>
-          </Button>
-        )}
-      </div>
+      <TrainingResults
+        result={result}
+        error={resultError}
+        onRetrySave={() => void saveResult()}
+        onTrainAgain={restart}
+        onFinish={() => {
+          if (onExit) onExit();
+          else void navigate({ to: "/sets" });
+        }}
+      />
     );
   }
 
@@ -289,6 +313,7 @@ export function Session({
           key={`m-${attempt}-${unit.word.id}`}
           unit={unit}
           units={units}
+          onSkip={next}
           locale={locale}
           onDone={(correct, response) => {
             record("recall", correct ? 1 : 0.2, response);
@@ -305,14 +330,6 @@ export function Session({
   );
 }
 
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-bold text-primary">{value}</span>
-    </div>
-  );
-}
 
 /* --------------------------------- audio ---------------------------------- */
 
@@ -838,66 +855,32 @@ function MeaningStep({
   units,
   locale,
   onDone,
+  onSkip,
 }: {
   unit: WordUnit;
   units: WordUnit[];
   locale: string;
   onDone: (correct: boolean, response: string) => void;
+  onSkip: () => void;
 }) {
   const { t } = useI18n();
   const { learner } = useLearner();
-  const fetchQuestion = useServerFn(getMeaningQuestion);
   const correct = unit.word.translation ?? unit.word.meaning ?? "";
   const [picked, setPicked] = useState<string | null>(null);
-  const [question, setQuestion] = useState<MeaningQuestion | null>(null);
-  const [options, setOptions] = useState<string[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loadKey, setLoadKey] = useState(0);
   void units;
-
-  useEffect(() => {
-    if (!correct) return;
-    let cancelled = false;
-    setQuestion(null);
-    setLoadError(null);
-    const targetLanguage =
-      new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] ?? locale) ?? locale;
-    fetchQuestion({
-      data: {
-        word: unit.word.text,
-        correct,
-        partOfSpeech: unit.word.part_of_speech ?? null,
-        context: unit.sentence?.text ?? null,
-        targetLanguage,
-        nativeLanguage: learner.native_language,
-        avoid: usedDistractors.get(unit.word.id) ?? [],
-      },
-    })
-      .then((q) => {
-        if (cancelled) return;
-        usedDistractors.set(unit.word.id, [
-          ...(usedDistractors.get(unit.word.id) ?? []),
-          ...q.distractors.map((d) => d.text),
-        ].slice(-20));
-        // Real random position for the correct answer, fixed for this question.
-        const all = [correct, ...q.distractors.map((d) => d.text)];
-        for (let i = all.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [all[i], all[j]] = [all[j] as string, all[i] as string];
-        }
-        setOptions(all);
-        setQuestion(q);
-      })
-      .catch(async (e: unknown) => {
-        if (cancelled) return;
-        const needsSignIn = await handleAuthFailure(e);
-        setLoadError(needsSignIn ? t("auth.expired") : e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unit.word.id, correct, loadKey]);
+  void learner;
+  // Options were generated and saved when the set was created; training never calls AI here.
+  const saved = (unit.word.meaning_options ?? []).filter((o) => o && o !== correct).slice(0, 3);
+  const question = correct && saved.length >= 3 ? true : null;
+  const loadError = question ? null : t("train.meaningMissing");
+  const [options] = useState<string[]>(() => {
+    const all = [correct, ...saved];
+    for (let i = all.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j] as string, all[i] as string];
+    }
+    return all;
+  });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -913,8 +896,8 @@ function MeaningStep({
         loadError ? (
           <div className="mt-6 text-center" role="alert">
             <p className="text-sm text-destructive">{loadError}</p>
-            <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => setLoadKey((k) => k + 1)}>
-              <RotateCcw className="size-4" /> {t("train.meaningRetry")}
+            <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => onSkip()}>
+              {t("common.next")} <ArrowRight className="size-4 rtl:rotate-180" />
             </Button>
           </div>
         ) : (

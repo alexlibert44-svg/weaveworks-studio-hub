@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-import { generateSetContent } from "./generation.functions";
+import { prepareSet } from "./analysis";
 import { generateForms } from "./forms.functions";
 import {
   FORM_SKILLS,
@@ -252,6 +252,8 @@ export async function createForms(input: {
     .update({ forms_generated_at: new Date().toISOString() })
     .eq("id", input.setId);
   if (uError) throw uError;
+  // Meaning-quiz options for every new form are prepared now, not during training.
+  await prepareSet(input.deviceId, input.setId);
 }
 
 export async function getForm(formId: string): Promise<{
@@ -297,15 +299,6 @@ export async function createSet(input: CreateSetInput): Promise<string> {
   if (input.words.length > 10) throw new Error("A set can contain at most 10 words.");
   await ensureLearner(input.deviceId);
 
-  // Generate first: a set is never stored without real lesson content.
-  const generated = await generateSetContent({
-    data: {
-      words: input.words,
-      targetLanguage: input.targetLanguageName,
-      nativeLanguage: input.nativeLanguageName,
-    },
-  });
-
   const { data: set, error } = await supabase
     .from("word_sets")
     .insert({
@@ -318,84 +311,19 @@ export async function createSet(input: CreateSetInput): Promise<string> {
     .single();
   if (error) throw error;
 
-  await storeGenerated(input.deviceId, set.id as string, generated);
-  return set.id as string;
-}
-
-type Generated = Awaited<ReturnType<typeof generateSetContent>>;
-
-/** Persists AI content as words + sentences + trackable learning items. */
-async function storeGenerated(deviceId: string, setId: string, generated: Generated) {
-  const { data: words, error: wordError } = await supabase
-    .from("words")
-    .insert(
-      generated.map((g, index) => ({
-        set_id: setId,
-        text: g.target_word,
-        translation: g.translation,
-        meaning: g.translation,
-        pronunciation: g.pronunciation || null,
-        part_of_speech: g.part_of_speech || null,
-        alternative_parts_of_speech: g.alternative_parts_of_speech ?? [],
-        difficulty: g.difficulty ?? null,
-        tags: g.tags ?? [],
-        position: index,
-      })),
-    )
-    .select("*");
+  // Words are saved first (pending), then analysed one by one; a failed word
+  // stays in the set as "failed" and can be retried from the set page.
+  const { error: wordError } = await supabase.from("words").insert(
+    input.words.map((text, index) => ({
+      set_id: set.id as string,
+      text,
+      position: index,
+      analysis_status: "pending",
+    })),
+  );
   if (wordError) throw wordError;
-
-  const sentenceRows = (words ?? []).flatMap((word) => {
-    const content = generated.find((g) => g.target_word === word.text);
-    return (content?.sentences ?? []).map((s) => ({
-      word_id: word.id,
-      text: s.text,
-      translation: s.translation,
-      form: s.form,
-      variation_index: s.variation_index,
-      is_ai_generated: true,
-      word_hints: s.word_hints ?? [],
-    }));
-  });
-
-  const { data: sentences, error: sentenceError } = await supabase
-    .from("sentences")
-    .insert(sentenceRows)
-    .select("*");
-  if (sentenceError) throw sentenceError;
-
-  const itemRows = (words ?? []).flatMap((word) => {
-    const wordSentences = (sentences ?? []).filter((s) => s.word_id === word.id);
-    const base = wordSentences.find((s) => s.form === "base" && s.variation_index === 0);
-    const core = CORE_SKILLS.map((skill) => ({
-      device_id: deviceId,
-      set_id: setId,
-      word_id: word.id,
-      sentence_id: base?.id ?? null,
-      skill,
-      form: "base",
-      next_review_at: new Date().toISOString(),
-    }));
-
-    // Context variations and grammatical forms are introduced gradually.
-    // Grammatical forms are created only on request (Tenses & Forms tab).
-    const extras = wordSentences
-      .filter((s) => s.form === "base" && s.variation_index !== 0)
-      .map((s, index) => ({
-        device_id: deviceId,
-        set_id: setId,
-        word_id: word.id,
-        sentence_id: s.id,
-        skill: "sentence_usage" as Skill,
-        form: s.form,
-        next_review_at: new Date(Date.now() + (index + 2) * 86400000).toISOString(),
-      }));
-
-    return [...core, ...extras];
-  });
-
-  const { error: itemError } = await supabase.from("learning_items").insert(itemRows);
-  if (itemError) throw itemError;
+  await prepareSet(input.deviceId, set.id as string);
+  return set.id as string;
 }
 
 export async function renameSet(setId: string, name: string) {
@@ -512,6 +440,7 @@ export async function buildQueue(
           text: form.text,
           translation: form.translation,
           meaning: form.translation,
+          meaning_options: form.meaning_options ?? null,
           pronunciation: form.pronunciation,
           part_of_speech: original.part_of_speech,
           alternative_parts_of_speech: [],
@@ -601,6 +530,7 @@ export async function recordAttempt(
       is_correct: score >= 0.6,
       score,
       response: sessionId ? tagResponse(sessionId, response) : response,
+      training_session_id: sessionId ?? null,
     }),
   ]);
   if (error) throw error;
@@ -684,15 +614,64 @@ function computeStreak(days: { day: string; minutes_practiced: number }[]): numb
   return streak;
 }
 
+/** Consecutive local days with at least one completed training session that had real answers. */
 export async function getLanguageStreak(deviceId: string, targetLanguage: string): Promise<number> {
-  const { data, error } = await supabase.from("language_daily_progress")
-    .select("day, minutes_practiced")
+  const { data, error } = await supabase
+    .from("training_sessions")
+    .select("local_day")
     .eq("device_id", deviceId)
     .eq("target_language", targetLanguage)
-    .order("day", { ascending: false })
-    .limit(60);
+    .eq("status", "completed")
+    .gt("total_attempts", 0)
+    .order("local_day", { ascending: false })
+    .limit(400);
   if (error) throw error;
-  return computeStreak((data ?? []) as { day: string; minutes_practiced: number }[]);
+  return trainingStreak((data ?? []).map((r) => r.local_day as string));
+}
+
+export function localDay(date = new Date()): string {
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${m}-${d}`;
+}
+
+/** Days are local YYYY-MM-DD strings; same-day sessions count once. */
+export function trainingStreak(days: string[], today = new Date()): number {
+  const set = new Set(days);
+  const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  // Today not trained yet: the streak is still alive if yesterday was.
+  if (!set.has(localDay(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (set.has(localDay(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+export interface PointsSummary {
+  points: number;
+  sessions: number;
+  /** null when no answers were recorded yet. */
+  accuracy: number | null;
+}
+
+/** Totals from saved completed sessions (all languages). */
+export async function getPointsSummary(deviceId: string): Promise<PointsSummary> {
+  const { data, error } = await supabase
+    .from("training_sessions")
+    .select("points, total_attempts, correct_attempts")
+    .eq("device_id", deviceId)
+    .eq("status", "completed");
+  if (error) throw error;
+  const rows = data ?? [];
+  const total = rows.reduce((a, r) => a + (r.total_attempts ?? 0), 0);
+  const correct = rows.reduce((a, r) => a + (r.correct_attempts ?? 0), 0);
+  return {
+    points: rows.reduce((a, r) => a + (r.points ?? 0), 0),
+    sessions: rows.filter((r) => (r.total_attempts ?? 0) > 0).length,
+    accuracy: total > 0 ? Math.round((correct / total) * 100) : null,
+  };
 }
 
 export interface ProfileStats {

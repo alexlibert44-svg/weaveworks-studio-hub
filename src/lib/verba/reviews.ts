@@ -265,6 +265,7 @@ export async function buildReviewSequence(setId: string, kind: ReviewKind): Prom
       text: form.text,
       translation: form.translation,
       meaning: form.translation,
+      meaning_options: form.meaning_options ?? null,
       pronunciation: form.pronunciation,
       alternative_parts_of_speech: [],
       explanation: `${form.form_label} · ${original.text}${form.explanation ? ` — ${form.explanation}` : ""}`,

@@ -221,6 +221,7 @@ export type Database = {
           response: string | null
           score: number | null
           skill: Database["public"]["Enums"]["skill_kind"]
+          training_session_id: string | null
         }
         Insert: {
           created_at?: string
@@ -231,6 +232,7 @@ export type Database = {
           response?: string | null
           score?: number | null
           skill: Database["public"]["Enums"]["skill_kind"]
+          training_session_id?: string | null
         }
         Update: {
           created_at?: string
@@ -241,6 +243,7 @@ export type Database = {
           response?: string | null
           score?: number | null
           skill?: Database["public"]["Enums"]["skill_kind"]
+          training_session_id?: string | null
         }
         Relationships: [
           {
@@ -456,6 +459,71 @@ export type Database = {
           },
         ]
       }
+      training_sessions: {
+        Row: {
+          accuracy: number | null
+          completed_at: string | null
+          correct_attempts: number | null
+          corrected_attempts: number | null
+          device_id: string
+          duration_seconds: number | null
+          id: string
+          incorrect_attempts: number | null
+          kind: string
+          local_day: string | null
+          points: number
+          set_id: string | null
+          started_at: string
+          status: string
+          target_language: string
+          total_attempts: number | null
+        }
+        Insert: {
+          accuracy?: number | null
+          completed_at?: string | null
+          correct_attempts?: number | null
+          corrected_attempts?: number | null
+          device_id?: string
+          duration_seconds?: number | null
+          id: string
+          incorrect_attempts?: number | null
+          kind?: string
+          local_day?: string | null
+          points?: number
+          set_id?: string | null
+          started_at?: string
+          status?: string
+          target_language: string
+          total_attempts?: number | null
+        }
+        Update: {
+          accuracy?: number | null
+          completed_at?: string | null
+          correct_attempts?: number | null
+          corrected_attempts?: number | null
+          device_id?: string
+          duration_seconds?: number | null
+          id?: string
+          incorrect_attempts?: number | null
+          kind?: string
+          local_day?: string | null
+          points?: number
+          set_id?: string | null
+          started_at?: string
+          status?: string
+          target_language?: string
+          total_attempts?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_sessions_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "word_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       word_forms: {
         Row: {
           created_at: string
@@ -467,6 +535,7 @@ export type Database = {
           form_label: string
           id: string
           is_regular: boolean | null
+          meaning_options: Json | null
           position: number
           pronunciation: string | null
           set_id: string
@@ -484,6 +553,7 @@ export type Database = {
           form_label: string
           id?: string
           is_regular?: boolean | null
+          meaning_options?: Json | null
           position?: number
           pronunciation?: string | null
           set_id: string
@@ -501,6 +571,7 @@ export type Database = {
           form_label?: string
           id?: string
           is_regular?: boolean | null
+          meaning_options?: Json | null
           position?: number
           pronunciation?: string | null
           set_id?: string
@@ -582,11 +653,14 @@ export type Database = {
       words: {
         Row: {
           alternative_parts_of_speech: string[]
+          analysis_error: string | null
+          analysis_status: string
           created_at: string
           difficulty: number | null
           forms_category: string | null
           id: string
           meaning: string | null
+          meaning_options: Json | null
           part_of_speech: string | null
           position: number
           pronunciation: string | null
@@ -597,11 +671,14 @@ export type Database = {
         }
         Insert: {
           alternative_parts_of_speech?: string[]
+          analysis_error?: string | null
+          analysis_status?: string
           created_at?: string
           difficulty?: number | null
           forms_category?: string | null
           id?: string
           meaning?: string | null
+          meaning_options?: Json | null
           part_of_speech?: string | null
           position?: number
           pronunciation?: string | null
@@ -612,11 +689,14 @@ export type Database = {
         }
         Update: {
           alternative_parts_of_speech?: string[]
+          analysis_error?: string | null
+          analysis_status?: string
           created_at?: string
           difficulty?: number | null
           forms_category?: string | null
           id?: string
           meaning?: string | null
+          meaning_options?: Json | null
           part_of_speech?: string | null
           position?: number
           pronunciation?: string | null
@@ -641,6 +721,14 @@ export type Database = {
     }
     Functions: {
       complete_review_session: { Args: { _session_id: string }; Returns: Json }
+      complete_training_session: {
+        Args: {
+          _active_seconds: number
+          _local_day: string
+          _session_id: string
+        }
+        Returns: Json
+      }
       owns_set: { Args: { _set_id: string }; Returns: boolean }
       owns_word: { Args: { _word_id: string }; Returns: boolean }
       review_interval_days: { Args: { _stage: number }; Returns: number }
