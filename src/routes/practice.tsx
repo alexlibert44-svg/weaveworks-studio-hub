@@ -1,7 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { TrainingResults } from "@/components/verba/TrainingResults";
+import { prepareSet, setReadiness } from "@/lib/verba/analysis";
+import { completeTrainingSession, startTrainingSession, type TrainingResult } from "@/lib/verba/training";
 
 import { Button } from "@/components/ui/button";
 import { useLearner } from "@/components/verba/AppGate";
@@ -84,9 +88,65 @@ function Spinner() {
 }
 
 function PracticePage() {
-  const { set: setId, review } = Route.useSearch();
-  if (setId && review) return <ReviewRun setId={setId} kind={review} />;
-  return <ExtraPractice />;
+  const { set: setId, review, scope } = Route.useSearch();
+  const body = setId && review ? <ReviewRun setId={setId} kind={review} /> : <ExtraPractice />;
+  if (!setId) return body;
+  return (
+    <PreparedGate key={`${setId}-${review ?? scope ?? ""}`} setId={setId} kind={review ?? scope ?? "words"}>
+      {body}
+    </PreparedGate>
+  );
+}
+
+/**
+ * Training only starts once every word has its saved analysis. Older sets that
+ * predate saved quiz options are prepared here once, before the session begins.
+ */
+function PreparedGate({ setId, kind, children }: { setId: string; kind: ReviewKind; children: React.ReactNode }) {
+  const { deviceId } = useLearner();
+  const { t } = useI18n();
+  const [preparing, setPreparing] = useState(false);
+  const tried = useRef(false);
+  const { data, refetch, error } = useQuery({
+    queryKey: ["readiness", setId, kind],
+    queryFn: () => setReadiness(setId, kind),
+    gcTime: 0,
+  });
+  useEffect(() => {
+    if (!data || data.ready || data.failed > 0 || tried.current) return;
+    tried.current = true;
+    setPreparing(true);
+    void prepareSet(deviceId, setId)
+      .catch(() => undefined)
+      .finally(() => {
+        setPreparing(false);
+        void refetch();
+      });
+  }, [data, deviceId, setId, refetch]);
+
+  if (error) throw error;
+  if (!data || preparing) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+        <Loader2 className="size-7 animate-spin text-primary" />
+        {preparing ? <p className="text-sm text-muted-foreground">{t("practice.preparing")}</p> : null}
+      </div>
+    );
+  }
+  // Forms without options still train (the meaning step says so); words must be ready.
+  if (data.notReady > 0) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
+        <Sparkles className="size-9 text-accent" />
+        <h1 className="mt-5 text-xl font-bold">{t("practice.notReady")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("practice.notReadyBody")}</p>
+        <Button asChild size="lg" className="mt-8 w-full rounded-2xl">
+          <Link to="/sets/$setId" params={{ setId }}>{t("common.continue")}</Link>
+        </Button>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
 
 function EmptyState() {
@@ -113,6 +173,10 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const [finishError, setFinishError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [outcome, setOutcome] = useState<ReviewOutcome | null>(null);
+  const [training, setTraining] = useState<{ id: string; seconds: number; sentencesFrom: number } | null>(null);
+  const [result, setResult] = useState<TrainingResult | null>(null);
+  const [resultError, setResultError] = useState<string | null>(null);
+  const { learner } = useLearner();
 
   const { data, isPending, error } = useQuery({
     queryKey: ["review-run", setId, kind],
@@ -135,7 +199,7 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   }, [data]);
 
   const refreshAll = () => {
-    for (const key of [["review-units", deviceId], ["sets", deviceId], ["set", setId], ["daily", deviceId], ["learner", deviceId], ["stats", deviceId]]) {
+    for (const key of [["review-units", deviceId], ["sets", deviceId], ["set", setId], ["daily", deviceId], ["learner", deviceId], ["stats", deviceId], ["language-streak", deviceId], ["points", deviceId]]) {
       void queryClient.invalidateQueries({ queryKey: key });
     }
   };
@@ -155,13 +219,36 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
   const { session, setInfo } = data;
   const phase = phaseOverride ?? session?.phase ?? "units";
 
-  const finishAll = async () => {
+  const saveTraining = async (info: { id: string; seconds: number; sentencesFrom: number } | null) => {
+    setResultError(null);
+    try {
+      let current = info;
+      if (!current) {
+        // Resumed straight into the sentence step: track it as its own session.
+        current = { id: crypto.randomUUID(), seconds: 0, sentencesFrom: Date.now() };
+      }
+      await startTrainingSession({
+        id: current.id,
+        setId,
+        kind,
+        targetLanguage: setInfo.set.target_language ?? learner.learning_language,
+      });
+      const sentenceSeconds = current.sentencesFrom ? (Date.now() - current.sentencesFrom) / 1000 : 0;
+      setResult(await completeTrainingSession(current.id, current.seconds + sentenceSeconds));
+      refreshAll();
+    } catch (e) {
+      setResultError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const finishAll = async (info = training) => {
     setFinishing(true);
     setFinishError(null);
     try {
       if (session) setOutcome(await completeReviewSession(session.id));
       refreshAll();
       setPhaseOverride("done");
+      void saveTraining(info);
     } catch (e) {
       // Never show "complete" unless the schedule was actually saved.
       setFinishError(e instanceof Error ? e.message : String(e));
@@ -189,32 +276,21 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
 
   if (phase === "done") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <Sparkles className="size-9 text-primary" />
-        <h1 className="mt-5 text-xl font-bold">{t("review.completeTitle")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {session ? t("review.completeBody") : t("review.practiceBody")}
-        </p>
-        {outcome?.recall ? (
-          <div className="card-surface mt-6 w-full space-y-2 p-5 text-start text-sm">
-            <p className="font-bold">{t(`review.recall.${outcome.recall}` as never)}</p>
-            <p className="text-muted-foreground">
-              {t("review.outcomeScore", { correct: outcome.correct ?? 0, total: (outcome.correct ?? 0) + (outcome.incorrect ?? 0) })}
-            </p>
-            {outcome.timing === "long_delay" ? (
-              <p className="text-muted-foreground">{t("review.outcomeLate")}</p>
-            ) : null}
-            {outcome.next_review_at ? (
-              <p className="font-semibold text-primary-deep">
-                {t("review.outcomeNext", { when: countdown(outcome.next_review_at, locale) })}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-        <Button size="lg" className="mt-8 w-full rounded-2xl" onClick={backToSet}>
-          {t("common.continue")}
-        </Button>
-      </div>
+      <TrainingResults
+        result={result}
+        error={resultError}
+        onRetrySave={() => void saveTraining(training)}
+        onFinish={backToSet}
+        onTrainAgain={() => {
+          refreshAll();
+          void navigate({ to: "/practice", search: { set: setId, scope: kind } });
+        }}
+        note={
+          outcome?.next_review_at
+            ? t("review.outcomeNext", { when: countdown(outcome.next_review_at, locale) })
+            : null
+        }
+      />
     );
   }
 
@@ -254,13 +330,17 @@ function ReviewRun({ setId, kind }: { setId: string; kind: ReviewKind }) {
         if (session) void saveSessionProgress(session.id, { position: index }).catch(() => undefined);
       }}
       onFinished={refreshAll}
-      onComplete={() => {
+      onComplete={(info) => {
+        const next = { id: info.trainingId, seconds: info.activeSeconds, sentencesFrom: 0 };
         if (kind === "words") {
+          next.sentencesFrom = Date.now();
+          setTraining(next);
           if (session)
             void saveSessionProgress(session.id, { phase: "sentences", position: 0 }).catch(() => undefined);
           setPhaseOverride("sentences");
         } else {
-          void finishAll();
+          setTraining(next);
+          void finishAll(next);
         }
       }}
       onExit={backToSet}
@@ -317,6 +397,8 @@ function ExtraPractice() {
         void queryClient.invalidateQueries({ queryKey: ["daily", deviceId] });
         void queryClient.invalidateQueries({ queryKey: ["learner", deviceId] });
         void queryClient.invalidateQueries({ queryKey: ["stats", deviceId] });
+        void queryClient.invalidateQueries({ queryKey: ["language-streak", deviceId] });
+        void queryClient.invalidateQueries({ queryKey: ["points", deviceId] });
         if (setId) void queryClient.invalidateQueries({ queryKey: ["set", setId] });
         if (word) void queryClient.invalidateQueries({ queryKey: ["word", word] });
         if (form) void queryClient.invalidateQueries({ queryKey: ["form", form] });
