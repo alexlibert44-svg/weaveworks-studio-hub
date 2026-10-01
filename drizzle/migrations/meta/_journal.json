@@ -57,6 +57,13 @@
       "when": 1790856371321,
       "tag": "0007_sentence_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790864610224,
+      "tag": "0008_review_scheduler_relearning",
+      "breakpoints": true
     }
   ]
 }
