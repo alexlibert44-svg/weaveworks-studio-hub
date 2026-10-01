@@ -83,6 +83,7 @@ export const en = {
   "add.count": "{count} of {min} minimum",
   "add.create": "Create set",
   "add.needMore": "Add at least {min} words first.",
+  "add.max": "This set is full: a set can hold up to {max} words.",
   "add.duplicate": "That word is already in the list.",
   "add.generating": "Building your lessons",
   "add.generatingBody": "Writing natural sentences, translations and exercises for your words.",

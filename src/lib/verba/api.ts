@@ -294,6 +294,7 @@ export interface CreateSetInput {
 
 export async function createSet(input: CreateSetInput): Promise<string> {
   if (input.words.length < 4) throw new Error("A set needs at least 4 words.");
+  if (input.words.length > 10) throw new Error("A set can contain at most 10 words.");
   await ensureLearner(input.deviceId);
 
   // Generate first: a set is never stored without real lesson content.

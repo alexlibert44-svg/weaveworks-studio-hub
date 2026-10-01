@@ -84,6 +84,7 @@ export const ar: Dictionary = {
   "add.count": "{count} من {min} كحد أدنى",
   "add.create": "إنشاء المجموعة",
   "add.needMore": "أضف {min} كلمات على الأقل أولًا.",
+  "add.max": "اكتملت المجموعة: الحد الأقصى {max} كلمات.",
   "add.duplicate": "هذه الكلمة موجودة في القائمة.",
   "add.generating": "نُجهّز دروسك",
   "add.generatingBody": "نكتب جملًا طبيعية وترجمات وتمارين لكلماتك.",

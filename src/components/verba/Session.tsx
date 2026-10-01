@@ -899,8 +899,6 @@ function MeaningStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unit.word.id, correct, loadKey]);
 
-  const pickedWhy = question?.distractors.find((d) => d.text === picked)?.why;
-
   return (
     <div className="flex flex-1 flex-col">
       <h2 className="text-lg font-bold">{t("train.meaningTitle")}</h2>
@@ -908,11 +906,6 @@ function MeaningStep({
         <p className="text-3xl font-bold" lang={locale}>
           {unit.word.text}
         </p>
-        {unit.sentence?.text ? (
-          <p className="mt-3 text-sm text-muted-foreground" lang={locale}>
-            {unit.sentence.text}
-          </p>
-        ) : null}
         <SpeakButton variant="secondary" className="mt-4 w-full rounded-xl" text={unit.word.text} locale={locale} label={t("train.wordAudio")} />
       </div>
 
@@ -960,8 +953,6 @@ function MeaningStep({
           <p className={cn("font-bold", picked === correct ? "text-success" : "text-destructive")}>
             {picked === correct ? t("train.meaningCorrect") : t("train.meaningWrong", { answer: correct })}
           </p>
-          <p className="text-muted-foreground">{question.explanation}</p>
-          {pickedWhy ? <p className="text-muted-foreground">{pickedWhy}</p> : null}
         </div>
       ) : null}
 
