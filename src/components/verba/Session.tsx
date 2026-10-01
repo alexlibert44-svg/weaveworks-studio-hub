@@ -1,4 +1,11 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { TrainingResults } from "@/components/verba/TrainingResults";
+import {
+  completeTrainingSession,
+  createActivityClock,
+  startTrainingSession,
+  type TrainingResult,
+} from "@/lib/verba/training";
 import {
   ArrowRight,
   Check,
@@ -102,8 +109,8 @@ interface SessionProps {
   initialIndex?: number;
   /** Called when the learner moves on to the next word (persisted for resumption). */
   onProgress?: (index: number) => void;
-  /** When set, the last word hands control back instead of showing the done screen. */
-  onComplete?: () => void;
+  /** When set, the last word hands control back instead of showing the results screen. */
+  onComplete?: (info: { trainingId: string; activeSeconds: number }) => void;
 }
 
 export function Session({
@@ -122,6 +129,7 @@ export function Session({
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
   const { t } = useI18n();
+  const navigate = useNavigate();
   const units = useMemo(() => buildUnits(exercises), [exercises]);
   const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(() => Math.min(initialIndex, Math.max(exercises.length - 1, 0)));
@@ -134,6 +142,43 @@ export function Session({
     meaningTotal: 0,
   });
   const startedAt = useRef(Date.now());
+  const clock = useRef<ReturnType<typeof createActivityClock> | null>(null);
+  const started = useRef<Promise<void> | null>(null);
+  const [result, setResult] = useState<TrainingResult | null>(null);
+  const [resultError, setResultError] = useState<string | null>(null);
+
+  const firstItem = exercises[0];
+  const openTraining = useCallback(() => {
+    started.current = startTrainingSession({
+      id: sessionId.current,
+      setId: firstItem?.item.set_id ?? null,
+      kind: firstItem?.word.form_label ? "forms" : "words",
+      targetLanguage,
+    }).catch(() => undefined);
+  }, [firstItem, targetLanguage]);
+
+  useEffect(() => {
+    clock.current = createActivityClock();
+    openTraining();
+    return () => clock.current?.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveResult = useCallback(async () => {
+    setResultError(null);
+    try {
+      await started.current;
+      await startTrainingSession({
+        id: sessionId.current,
+        setId: firstItem?.item.set_id ?? null,
+        kind: firstItem?.word.form_label ? "forms" : "words",
+        targetLanguage,
+      });
+      setResult(await completeTrainingSession(sessionId.current, clock.current?.seconds ?? 0));
+    } catch (e) {
+      setResultError(e instanceof Error ? e.message : String(e));
+    }
+  }, [firstItem, targetLanguage]);
 
   const unit = units[index];
   const total = units.length;
@@ -152,9 +197,13 @@ export function Session({
     const minutes = Math.max(0.5, Math.round(((Date.now() - startedAt.current) / 60000) * 10) / 10);
     void logSession(deviceId, minutes, total, targetLanguage).catch(() => undefined);
     onFinished();
-    if (onComplete) onComplete();
-    else setDone(true);
-  }, [deviceId, onFinished, onComplete, total, targetLanguage]);
+    if (onComplete) {
+      onComplete({ trainingId: sessionId.current, activeSeconds: clock.current?.seconds ?? 0 });
+    } else {
+      setDone(true);
+      void saveResult().then(onFinished);
+    }
+  }, [deviceId, onFinished, onComplete, total, targetLanguage, saveResult]);
 
   const next = () => {
     const position = STEPS.indexOf(step);
@@ -177,45 +226,26 @@ export function Session({
     setDone(false);
     startedAt.current = Date.now();
     sessionId.current = crypto.randomUUID();
+    setResult(null);
+    setResultError(null);
+    clock.current?.reset();
+    openTraining();
     setAttempt((value) => value + 1);
     onRestart?.();
   };
 
   if (done || !unit) {
-    const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-        <span className="flex size-20 items-center justify-center rounded-lg bg-primary-soft text-primary shadow-card">
-          <PartyPopper className="size-9" />
-        </span>
-        <h1 className="mt-6 text-2xl font-bold">{t("practice.done")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("practice.doneBody", { count: total, minutes })}
-        </p>
-        <div className="card-surface mt-6 w-full space-y-2 p-5 text-start text-sm">
-          <ResultRow label={t("train.resultWords")} value={`${total}`} />
-          <ResultRow
-            label={t("train.resultWriting")}
-            value={`${stats.writeCorrect}/${stats.writeTotal}`}
-          />
-          <ResultRow
-            label={t("train.resultMeaning")}
-            value={`${stats.meaningCorrect}/${stats.meaningTotal}`}
-          />
-        </div>
-        <Button size="lg" className="mt-6 w-full rounded-2xl" onClick={restart}>
-          <RotateCcw className="size-4" /> {t("train.restart")}
-        </Button>
-        {onExit ? (
-          <Button size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl" onClick={onExit}>
-            {t("train.exit")}
-          </Button>
-        ) : (
-          <Button asChild size="lg" variant="secondary" className="mt-2.5 w-full rounded-2xl">
-            <Link to="/sets">{t("train.exit")}</Link>
-          </Button>
-        )}
-      </div>
+      <TrainingResults
+        result={result}
+        error={resultError}
+        onRetrySave={() => void saveResult()}
+        onTrainAgain={restart}
+        onFinish={() => {
+          if (onExit) onExit();
+          else void navigate({ to: "/sets" });
+        }}
+      />
     );
   }
 
