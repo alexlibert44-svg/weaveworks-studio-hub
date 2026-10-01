@@ -86,7 +86,8 @@ function Home() {
   const goal = Math.max(1, Number(learner.daily_goal_minutes) || 1);
   const rawMinutes = Number(today?.minutes_practiced ?? 0);
   const minutes = Number.isFinite(rawMinutes) && rawMinutes > 0 ? Math.round(rawMinutes) : 0;
-  const goalPct = Math.max(0, Math.min(100, Math.round((minutes / goal) * 100)));
+  const displayedMinutes = Math.min(minutes, goal);
+  const goalPct = Math.round((displayedMinutes / goal) * 100);
 
   return (
     <AppShell>
@@ -110,7 +111,7 @@ function Home() {
           <div className="min-w-0 flex-1 rounded-2xl border border-hero-foreground/15 bg-hero-foreground/12 p-4 backdrop-blur-sm">
             <Target className="size-5 text-hero-foreground" />
             <p className="mt-2 text-2xl font-bold">
-              {minutes}
+              {displayedMinutes}
               <span className="text-sm font-semibold opacity-80">/{goal}</span>
             </p>
             <p className="text-xs text-hero-foreground/85">
