@@ -392,4 +392,8 @@ export const fr: Dictionary = {
   "review.whyBetter": "Pourquoi c'est mieux",
   "review.submitSentence": "Vérifier ma phrase",
   "review.mistakes": "À corriger",
+  "sets.search": "Rechercher des groupes",
+  "sets.searchPlaceholder": "Rechercher par nom…",
+  "sets.noMatches": "Aucun groupe correspondant.",
+  "sets.clearSearch": "Effacer la recherche",
 };

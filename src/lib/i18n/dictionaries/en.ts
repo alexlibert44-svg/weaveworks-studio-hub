@@ -391,6 +391,10 @@ export const en = {
   "review.whyBetter": "Why this is better",
   "review.submitSentence": "Check my sentence",
   "review.mistakes": "What to fix",
+  "sets.search": "Search groups",
+  "sets.searchPlaceholder": "Search by name…",
+  "sets.noMatches": "No matching groups found.",
+  "sets.clearSearch": "Clear search",
 } as const;
 
 export type MessageKey = keyof typeof en;

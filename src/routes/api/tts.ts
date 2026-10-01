@@ -46,7 +46,8 @@ export const Route = createFileRoute("/api/tts")({
                 role: "user",
                 parts: [
                   {
-                    text: `Read aloud in ${parsed.data.language}, slowly and clearly, like a language teacher: ${parsed.data.text}`,
+                    // Only the quoted text is spoken: no translation, no added words.
+                    text: `Speak the text between <say> tags in ${parsed.data.language}, with native ${parsed.data.language} pronunciation, clearly and at a slightly slow teaching pace. Say exactly that text, word for word: do not translate it, do not read the tags, and do not add anything.\n<say>${parsed.data.text}</say>`,
                   },
                 ],
               },

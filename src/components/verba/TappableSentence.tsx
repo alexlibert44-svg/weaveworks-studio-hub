@@ -37,7 +37,10 @@ export function TappableSentence({
       | { v?: number; words?: WordGloss[] }
       | null
       | undefined;
-    return saved && saved.v === 2 && Array.isArray(saved.words) ? saved.words : null;
+    if (!saved || !Array.isArray(saved.words)) return null;
+    if (saved.v === 3) return saved.words;
+    if (saved.v === 2) return saved.words.map((w, i) => ({ ...w, i }));
+    return null;
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -53,8 +56,23 @@ export function TappableSentence({
 
   const tokens = text.split(/(\s+)/);
 
-  const load = async () => {
-    if (glosses || loading) return;
+  /** Index among whitespace-separated words — the same key the saved alignment uses. */
+  const wordIndex = (tokenIndex: number) => tokens.slice(0, tokenIndex).filter((x) => x.trim()).length;
+
+  const glossFor = (list: WordGloss[] | null, tokenIndex: number): WordGloss | null => {
+    if (!list) return null;
+    const word = clean(tokens[tokenIndex] ?? "");
+    const byIndex = list.find((g) => g.i === wordIndex(tokenIndex));
+    if (byIndex && clean(byIndex.word) === word) return byIndex;
+    // Displayed text can differ slightly from the saved translation: fall back to the same word.
+    return list.find((g) => clean(g.word) === word && g.meaning) ?? list.find((g) => clean(g.word) === word) ?? null;
+  };
+
+  const load = async (tokenIndex: number) => {
+    if (loading) return;
+    const known = glossFor(glosses, tokenIndex);
+    // Saved match, or a word already checked and genuinely without one: nothing to fetch.
+    if (glosses && known && (known.meaning || known.tried)) return;
     setLoading(true);
     setError(false);
     try {
@@ -63,9 +81,23 @@ export function TappableSentence({
           sentenceId: sentence.id,
           targetLanguage: language(locale.split("-")[0] ?? locale).english,
           nativeLanguage: native.english,
+          ...(known ? { resolve: known.i } : {}),
         },
       });
-      setGlosses(result);
+      let next = result;
+      const found = glossFor(result, tokenIndex);
+      if (found && !found.meaning && !found.tried) {
+        // First pass left this word unmatched: resolve just this word.
+        next = await glossFn({
+          data: {
+            sentenceId: sentence.id,
+            targetLanguage: language(locale.split("-")[0] ?? locale).english,
+            nativeLanguage: native.english,
+            resolve: found.i,
+          },
+        });
+      }
+      setGlosses(next);
     } catch (cause) {
       // Renew an expired sign-in silently; the hint simply retries next tap.
       await handleAuthFailure(cause);
@@ -75,16 +107,7 @@ export function TappableSentence({
     }
   };
 
-  const meaningFor = (tokenIndex: number): string | null => {
-    if (!glosses) return null;
-    const word = clean(tokens[tokenIndex] ?? "");
-    const wordPos = tokens.slice(0, tokenIndex).filter((x) => x.trim() && clean(x)).length;
-    const matches = glosses.filter((g) => clean(g.word) === word);
-    if (matches.length === 0) return null;
-    // Prefer the gloss at the same position when a word repeats.
-    const byPos = glosses[wordPos];
-    return (byPos && clean(byPos.word) === word ? byPos : matches[0])!.meaning ?? null;
-  };
+  const meaningFor = (tokenIndex: number): string | null => glossFor(glosses, tokenIndex)?.meaning ?? null;
 
   return (
     <div ref={ref}>
@@ -100,7 +123,7 @@ export function TappableSentence({
                 type="button"
                 onClick={() => {
                   setOpen(active ? null : index);
-                  void load();
+                  void load(index);
                 }}
                 aria-expanded={active}
                 className={cn(
@@ -118,7 +141,7 @@ export function TappableSentence({
                   {loading ? (
                     <Loader2 className="size-4 animate-spin text-primary" />
                   ) : error ? (
-                    <button type="button" className="text-destructive" onClick={() => void load()}>
+                    <button type="button" className="text-destructive" onClick={() => void load(index)}>
                       {t("audio.retry")}
                     </button>
                   ) : (

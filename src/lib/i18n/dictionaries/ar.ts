@@ -392,4 +392,8 @@ export const ar: Dictionary = {
   "review.whyBetter": "لماذا هذا أفضل",
   "review.submitSentence": "تحقق من جملتي",
   "review.mistakes": "ما يجب تصحيحه",
+  "sets.search": "البحث في المجموعات",
+  "sets.searchPlaceholder": "ابحث بالاسم…",
+  "sets.noMatches": "لم يتم العثور على مجموعات مطابقة.",
+  "sets.clearSearch": "مسح البحث",
 };

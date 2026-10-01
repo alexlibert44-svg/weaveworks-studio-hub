@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { TrainingResults } from "@/components/verba/TrainingResults";
+import { SentenceInvite, SentencePractice } from "@/components/verba/SentencePractice";
+import { language } from "@/lib/i18n/languages";
 import {
   completeTrainingSession,
   createActivityClock,
@@ -122,13 +124,15 @@ export function Session({
 }: SessionProps) {
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
-  const { t } = useI18n();
+  const { t, native } = useI18n();
   const navigate = useNavigate();
   const units = useMemo(() => buildUnits(exercises), [exercises]);
   const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(() => Math.min(initialIndex, Math.max(exercises.length - 1, 0)));
   const [step, setStep] = useState<Step>("recognition");
   const [done, setDone] = useState(false);
+  /** After the exercises: optional sentence step, then results (results are saved first). */
+  const [after, setAfter] = useState<"invite" | "sentences" | "results">("invite");
   const [, setStats] = useState({
     writeCorrect: 0,
     writeTotal: 0,
@@ -218,6 +222,7 @@ export function Session({
     setIndex(0);
     setStep("recognition");
     setDone(false);
+    setAfter("invite");
     startedAt.current = Date.now();
     sessionId.current = crypto.randomUUID();
     setResult(null);
@@ -227,6 +232,27 @@ export function Session({
     setAttempt((value) => value + 1);
     onRestart?.();
   };
+
+  if (done && after === "invite") {
+    return <SentenceInvite onStart={() => setAfter("sentences")} onSkip={() => setAfter("results")} />;
+  }
+  if (done && after === "sentences") {
+    const seen = new Map<string, Word>();
+    for (const e of exercises) {
+      if (!seen.has(e.item.word_id)) seen.set(e.item.word_id, { ...e.word, id: e.item.word_id } as Word);
+    }
+    return (
+      <SentencePractice
+        title={title}
+        words={[...seen.values()]}
+        targetCode={targetLanguage}
+        targetLanguageName={language(targetLanguage).english}
+        nativeLanguageName={native.english}
+        trainingId={sessionId.current}
+        onFinish={() => setAfter("results")}
+      />
+    );
+  }
 
   if (done || !unit) {
     return (
