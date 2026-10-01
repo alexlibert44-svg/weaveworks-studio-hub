@@ -50,6 +50,13 @@
       "when": 1790816244627,
       "tag": "0006_word_analysis_and_training_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790856371321,
+      "tag": "0007_sentence_attempts",
+      "breakpoints": true
     }
   ]
 }
