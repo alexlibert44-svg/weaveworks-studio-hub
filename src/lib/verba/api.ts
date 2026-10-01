@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 import { generateSetContent } from "./generation.functions";
+import { prepareSet } from "./analysis";
 import { generateForms } from "./forms.functions";
 import {
   FORM_SKILLS,
@@ -252,6 +253,8 @@ export async function createForms(input: {
     .update({ forms_generated_at: new Date().toISOString() })
     .eq("id", input.setId);
   if (uError) throw uError;
+  // Meaning-quiz options for every new form are prepared now, not during training.
+  await prepareSet(input.deviceId, input.setId);
 }
 
 export async function getForm(formId: string): Promise<{
@@ -297,15 +300,6 @@ export async function createSet(input: CreateSetInput): Promise<string> {
   if (input.words.length > 10) throw new Error("A set can contain at most 10 words.");
   await ensureLearner(input.deviceId);
 
-  // Generate first: a set is never stored without real lesson content.
-  const generated = await generateSetContent({
-    data: {
-      words: input.words,
-      targetLanguage: input.targetLanguageName,
-      nativeLanguage: input.nativeLanguageName,
-    },
-  });
-
   const { data: set, error } = await supabase
     .from("word_sets")
     .insert({
@@ -318,7 +312,18 @@ export async function createSet(input: CreateSetInput): Promise<string> {
     .single();
   if (error) throw error;
 
-  await storeGenerated(input.deviceId, set.id as string, generated);
+  // Words are saved first (pending), then analysed one by one; a failed word
+  // stays in the set as "failed" and can be retried from the set page.
+  const { error: wordError } = await supabase.from("words").insert(
+    input.words.map((text, index) => ({
+      set_id: set.id as string,
+      text,
+      position: index,
+      analysis_status: "pending",
+    })),
+  );
+  if (wordError) throw wordError;
+  await prepareSet(input.deviceId, set.id as string);
   return set.id as string;
 }
 
@@ -512,6 +517,7 @@ export async function buildQueue(
           text: form.text,
           translation: form.translation,
           meaning: form.translation,
+          meaning_options: form.meaning_options ?? null,
           pronunciation: form.pronunciation,
           part_of_speech: original.part_of_speech,
           alternative_parts_of_speech: [],
@@ -601,6 +607,7 @@ export async function recordAttempt(
       is_correct: score >= 0.6,
       score,
       response: sessionId ? tagResponse(sessionId, response) : response,
+      training_session_id: sessionId ?? null,
     }),
   ]);
   if (error) throw error;

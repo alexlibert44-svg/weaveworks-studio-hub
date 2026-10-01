@@ -45,6 +45,11 @@ export interface Word {
   form_label?: string | null;
   form_parent?: string | null;
   form_explanation?: string | null;
+  /** pending | ready | failed — analysis runs at Word Set creation. */
+  analysis_status?: string | null;
+  analysis_error?: string | null;
+  /** Saved wrong options for the meaning quiz (native language). */
+  meaning_options?: string[] | null;
 }
 
 export interface Sentence {
@@ -130,6 +135,7 @@ export interface WordForm {
   example_translation: string | null;
   pronunciation: string | null;
   position: number;
+  meaning_options?: string[] | null;
 }
 
 /** One step inside a learning session. */
