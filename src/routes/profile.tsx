@@ -166,19 +166,10 @@ function ProfilePage() {
           value={streak ?? 0}
           icon={<Flame className="size-4 text-accent" />}
         />
-      </ul>
-
-      <h2 className="mt-6 mb-3 text-lg font-bold">{t("profile.points")}</h2>
-      <ul className="grid grid-cols-2 gap-2.5">
         <StatCard
           label={t("profile.pointsTotal")}
           value={points?.points ?? 0}
           icon={<Star className="size-4 text-accent" />}
-        />
-        <StatCard label={t("profile.sessions")} value={points?.sessions ?? 0} />
-        <StatCard
-          label={t("profile.accuracy")}
-          value={points?.accuracy == null ? "—" : `${points.accuracy}%`}
         />
       </ul>
     </AppShell>
