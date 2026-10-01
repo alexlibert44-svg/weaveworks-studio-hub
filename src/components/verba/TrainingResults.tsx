@@ -45,7 +45,7 @@ export function TrainingResults({
 
   const accuracy = result.accuracy == null ? "—" : `${Math.round(result.accuracy)}%`;
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pt-10 pb-8">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-8">
       <h1 className="text-center text-2xl font-bold">{t("results.title")}</h1>
       <div className="mt-8 grid grid-cols-3 gap-2.5">
         <Stat icon={<Clock className="size-5" />} label={t("results.time")} value={formatDuration(result.duration_seconds)} />
@@ -58,7 +58,7 @@ export function TrainingResults({
           : t("results.noAnswers")}
       </p>
       {note ? <div className="mt-2 text-center text-xs text-muted-foreground">{note}</div> : null}
-      <div className="mt-auto space-y-2.5 pt-8">
+      <div className="mt-8 space-y-2.5">
         <Button size="lg" className="w-full rounded-2xl" onClick={onFinish}>
           {t("results.finish")}
         </Button>
