@@ -19,3 +19,5 @@
 - Use SignatureFrame for Home, Review and Profile; CSS tokens for surfaces/buttons/progress. Why: consistent identity without behavior changes.
 - Scope sets/reviews/practice/stats to `word_sets.target_language`, and daily minutes/streaks to `language_daily_progress`. Why: languages remain isolated.
 - Use shared LanguageSelector on Home and Settings with a body portal and own scroll area. Why: mobile scrolling stays in the list.
+- Word analysis (translation, sentences, items, meaning-quiz options in `words.meaning_options`/`word_forms.meaning_options`) runs only at set/forms creation or explicit retry via `src/lib/verba/analysis.ts`; per-word `analysis_status` pending/ready/failed. Why: training never calls AI for meanings.
+- Training results live in `training_sessions`, completed only by `complete_training_session` (first attempt per item, recognition excluded, points = round(acc×20), idempotent); streaks = consecutive `local_day`s with completed sessions that had answers. Why: points/streaks from real, non-duplicable records.
