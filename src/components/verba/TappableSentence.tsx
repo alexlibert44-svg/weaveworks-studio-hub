@@ -81,7 +81,7 @@ export function TappableSentence({
           sentenceId: sentence.id,
           targetLanguage: language(locale.split("-")[0] ?? locale).english,
           nativeLanguage: native.english,
-          ...(known ? { resolve: known.i } : glosses ? {} : {}),
+          ...(known ? { resolve: known.i } : {}),
         },
       });
       let next = result;
