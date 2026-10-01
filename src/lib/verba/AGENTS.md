@@ -1,4 +1,4 @@
-- Mastery derives from `practice_attempts` (correct answers in 6+ distinct sessions and latest correct, per skill); wrong answers never change stored progress; one progress gain per item per session; session id tagged in `response` as `[s:<id>]`.
+- Per-skill progress replays `practice_attempts` via `replaySkill` (first error-free correct per session +100/7, each wrong −5, floor 0, streak resets) and is saved to `learning_items.mastery`/`streak` in `recordAttempt`; mastered = 100% and 7 consecutive sessions in all three skills; session id tagged in `response` as `[s:<id>]`.
 - Word analysis (translation, sentences, items, `meaning_options` on words/forms) runs only at creation or explicit retry in `analysis.ts`; `analysis_status` pending/ready/failed. Why: training never calls AI for meanings.
 - Meaning distractors come from `getMeaningQuestion` (validated, 3 retries); correct answer = saved meaning.
 - Results live in `training_sessions`, completed only by `complete_training_session` (first attempt per item, no recognition, points = round(acc×20), idempotent); streak = consecutive `local_day`s with answered completed sessions.
