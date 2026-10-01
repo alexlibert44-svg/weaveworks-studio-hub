@@ -8,6 +8,8 @@ import {
   tagResponse,
   wordSkillItems,
   wordStatus,
+  replaySkill,
+  isSkillMastered,
   type SkillAttempt,
 } from "./progress";
 import { schedule } from "./srs";
@@ -521,31 +523,29 @@ export async function recordAttempt(
   sessionId?: string,
 ): Promise<LearningItem> {
   const update = schedule(item, score);
-  if (sessionId && score >= 0.6) {
-    // Retrying an exercise in the same session never adds progress twice.
-    const { count } = await supabase
-      .from("practice_attempts")
-      .select("id", { count: "exact", head: true })
-      .eq("learning_item_id", item.id)
-      .eq("training_session_id", sessionId)
-      .eq("is_correct", true);
-    if ((count ?? 0) > 0) {
-      update.mastery = Number(item.mastery);
-      update.state = item.state;
-    }
-  }
-  const [{ data, error }] = await Promise.all([
-    supabase.from("learning_items").update(update).eq("id", item.id).select("*").single(),
-    supabase.from("practice_attempts").insert({
-      device_id: deviceId,
-      learning_item_id: item.id,
-      skill: item.skill,
-      is_correct: score >= 0.6,
-      score,
-      response: sessionId ? tagResponse(sessionId, response) : response,
-      training_session_id: sessionId ?? null,
-    }),
-  ]);
+  const { error: insertError } = await supabase.from("practice_attempts").insert({
+    device_id: deviceId,
+    learning_item_id: item.id,
+    skill: item.skill,
+    is_correct: score >= 0.6,
+    score,
+    response: sessionId ? tagResponse(sessionId, response) : response,
+    training_session_id: sessionId ?? null,
+  });
+  if (insertError) throw insertError;
+  // Progress and the consecutive-session streak are recomputed from the saved history.
+  const { data: history, error: historyError } = await supabase
+    .from("practice_attempts")
+    .select("is_correct, response, created_at")
+    .eq("learning_item_id", item.id);
+  if (historyError) throw historyError;
+  const replayed = replaySkill(history ?? []);
+  update.mastery = replayed.progress;
+  update.streak = replayed.streak;
+  update.state = (history ?? []).length === 0
+    ? "new"
+    : isSkillMastered(replayed.progress, replayed.streak) ? "mastered" : "learning";
+  const { data, error } = await supabase.from("learning_items").update(update).eq("id", item.id).select("*").single();
   if (error) throw error;
   await supabase
     .from("word_sets")

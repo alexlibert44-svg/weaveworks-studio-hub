@@ -39,7 +39,7 @@ export function unitProgress(skillItems: LearningItem[], required: Skill[]): num
 export function unitMastered(skillItems: LearningItem[], required: Skill[]): boolean {
   return required.every((skill) => {
     const item = skillItems.find((i) => i.skill === skill);
-    return item ? Number(item.mastery) >= MASTERY_THRESHOLD : false;
+    return item ? isSkillMastered(Number(item.mastery), item.streak) : false;
   });
 }
 
@@ -62,7 +62,8 @@ export interface SkillAttempt {
 }
 
 /** Mastery rule for each required skill, evaluated independently. */
-export const MASTERY_RULE = { sessions: 6 } as const;
+export const MASTERY_RULE = { sessions: 7, penalty: 5 } as const;
+const STEP = 100 / MASTERY_RULE.sessions;
 
 const SESSION_PREFIX = /^\[s:([^\]]+)\]\s?/;
 
@@ -72,7 +73,7 @@ export function tagResponse(sessionId: string, response: string | null): string 
 }
 
 /** Session key of an attempt. Older attempts stored before session tagging fall back to their day. */
-export function attemptSession(a: SkillAttempt): string {
+export function attemptSession(a: Pick<SkillAttempt, "response" | "created_at">): string {
   const m = a.response ? SESSION_PREFIX.exec(a.response) : null;
   return m?.[1] ? m[1] : `day:${a.created_at.slice(0, 10)}`;
 }
@@ -81,38 +82,71 @@ export function stripSessionTag(response: string | null): string | null {
   return response ? response.replace(SESSION_PREFIX, "") : response;
 }
 
+export interface SkillProgress {
+  /** Saved progress percentage, 0–100. */
+  progress: number;
+  /** Consecutive successful sessions since the last mistake. */
+  streak: number;
+}
+
+/**
+ * Replays one skill's stored attempts in order. The first correct answer in a
+ * session without an earlier mistake adds one step (100/7, so 14/29/43/57/71/86/100);
+ * every wrong answer removes 5 points (never below 0) and resets the streak.
+ */
+export function replaySkill(attempts: Pick<SkillAttempt, "is_correct" | "response" | "created_at">[]): SkillProgress {
+  const ordered = [...attempts].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  let value = 0;
+  let streak = 0;
+  const gained = new Set<string>();
+  const errored = new Set<string>();
+  for (const a of ordered) {
+    const key = attemptSession(a);
+    if (!a.is_correct) {
+      value = Math.max(0, value - MASTERY_RULE.penalty);
+      streak = 0;
+      errored.add(key);
+    } else if (!gained.has(key) && !errored.has(key)) {
+      value = Math.min(100, value + STEP);
+      streak += 1;
+      gained.add(key);
+    }
+  }
+  return { progress: Math.round(value * 100) / 100, streak };
+}
+
 export interface SkillMastery {
   skill: Skill;
   attempts: number;
   successes: number;
   sessions: number;
+  progress: number;
+  streak: number;
   mastered: boolean;
 }
 
-/**
- * A skill is mastered only after correct answers in at least six distinct
- * training sessions, and only while its most recent answer is correct.
- * Retries inside one session never count as extra sessions.
- */
+/** A skill is mastered at 100% with seven consecutive error-free successful sessions. */
 export function skillMastery(skill: Skill, attempts: SkillAttempt[]): SkillMastery {
-  const own = attempts
-    .filter((a) => a.skill === skill)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const successes = own.filter((a) => a.is_correct).length;
-  const successSessions = new Set(own.filter((a) => a.is_correct).map(attemptSession)).size;
-  const mastered = successSessions >= MASTERY_RULE.sessions && own[0]?.is_correct === true;
+  const own = attempts.filter((a) => a.skill === skill);
+  const { progress, streak } = replaySkill(own);
   return {
     skill,
     attempts: own.length,
-    successes,
+    successes: own.filter((a) => a.is_correct).length,
     sessions: new Set(own.map(attemptSession)).size,
-    mastered,
+    progress,
+    streak,
+    mastered: isSkillMastered(progress, streak),
   };
 }
 
-/** Shown progress never reads as complete until the mastery rule is met. */
-export function displayProgress(value: number, mastered: boolean): number {
-  return mastered ? 100 : Math.min(Math.round(value), 95);
+export function isSkillMastered(progress: number, streak: number): boolean {
+  return Math.round(progress) >= 100 && streak >= MASTERY_RULE.sessions;
+}
+
+/** Displayed progress is exactly the saved value. */
+export function displayProgress(value: number, _mastered?: boolean): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 /** New = no graded attempt in any required skill; Mastered = every required skill meets the rule. */
