@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { language } from "@/lib/i18n/languages";
 
+import { prepareAudio } from "./audio.functions";
 import { generateSetContent } from "./generation.functions";
 import { getMeaningQuestion } from "./meaning.functions";
 import type { Skill, Word, WordForm } from "./types";
@@ -19,6 +20,25 @@ const CORE_SKILLS: Skill[] = ["recognition", "writing", "speaking", "recall"];
 interface SetLangs {
   target: string;
   native: string;
+  /** Speech language name, identical to the one the audio button sends. */
+  speech: string;
+}
+
+/** Same naming as the audio button (speech.ts) so stored audio is found again. */
+function speechLanguage(code: string): string {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(code.split("-")[0] ?? code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** Generates (or reuses) stored audio; throws when any file could not be stored. */
+async function ensureStoredAudio(texts: (string | null | undefined)[], langs: SetLangs) {
+  const list = texts.map((t) => t?.trim()).filter((t): t is string => Boolean(t));
+  if (list.length === 0) return;
+  const { failed } = await prepareAudio({ data: { language: langs.speech, texts: list } });
+  if (failed.length) throw new Error(`Audio could not be prepared for ${failed.length} item(s).`);
 }
 
 async function setLanguages(setId: string): Promise<SetLangs> {
@@ -31,6 +51,7 @@ async function setLanguages(setId: string): Promise<SetLangs> {
   return {
     target: language(data.target_language).english,
     native: language(data.native_language).english,
+    speech: speechLanguage(data.target_language),
   };
 }
 
@@ -157,6 +178,13 @@ async function analyzeWord(deviceId: string, setId: string, word: Word, langs: S
       const { error } = await supabase.from("words").update({ meaning_options: options }).eq("id", current.id);
       if (error) throw error;
     }
+    // Audio for the word and its sentences must be stored before the word is ready.
+    const { data: sentenceRows } = await supabase
+      .from("sentences")
+      .select("text")
+      .eq("word_id", current.id)
+      .not("form", "like", "form:%");
+    await ensureStoredAudio([current.text, ...(sentenceRows ?? []).map((r) => r.text)], langs);
     const { error } = await supabase
       .from("words")
       .update({ analysis_status: "ready", analysis_error: null })
@@ -171,6 +199,8 @@ async function analyzeWord(deviceId: string, setId: string, word: Word, langs: S
 }
 
 async function analyzeForm(form: WordForm, langs: SetLangs): Promise<void> {
+  // Best effort: stored audio is reused, so this only generates what is missing.
+  await ensureStoredAudio([form.text, form.example], langs).catch(() => undefined);
   if (!form.translation || (Array.isArray(form.meaning_options) && form.meaning_options.length >= 3)) return;
   try {
     const options = await generateOptions({
