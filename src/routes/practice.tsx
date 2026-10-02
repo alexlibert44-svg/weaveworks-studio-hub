@@ -388,6 +388,7 @@ function ExtraPractice() {
       title={title}
       locale={locale}
       targetLanguage={setInfo?.set.target_language ?? learner.learning_language}
+      scope={word || form ? "single" : "set"}
       onFinished={() => {
         void queryClient.invalidateQueries({ queryKey: ["sets", deviceId] });
         void queryClient.invalidateQueries({ queryKey: ["daily", deviceId] });
