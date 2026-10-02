@@ -392,7 +392,6 @@ export const en = {
   "practice.preparing": "Preparing your words…",
   "profile.points": "Points",
   "profile.pointsTotal": "Total points",
-  "profile.pointsSplit": "Sets {set} · Single words {single}",
   "results.maxSet": "Word Set training · up to 15 points",
   "results.maxSingle": "Single-word training · up to 5 points",
   "profile.sessions": "Completed sessions",

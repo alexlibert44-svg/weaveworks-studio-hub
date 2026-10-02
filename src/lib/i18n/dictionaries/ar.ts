@@ -393,7 +393,6 @@ export const ar: Dictionary = {
   "practice.preparing": "جارٍ تجهيز كلماتك…",
   "profile.points": "النقاط",
   "profile.pointsTotal": "مجموع النقاط",
-  "profile.pointsSplit": "المجموعات {set} · الكلمات المفردة {single}",
   "results.maxSet": "تدريب المجموعة · حتى 15 نقطة",
   "results.maxSingle": "تدريب كلمة واحدة · حتى 5 نقاط",
   "profile.sessions": "الجلسات المكتملة",
