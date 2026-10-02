@@ -16,5 +16,5 @@
 - SignatureFrame on Home/Review/Profile; shared LanguageSelector (body portal, own scroll) on Home/Settings.
 - Scope sets/reviews/stats/streaks by `target_language`. Why: languages stay isolated.
 - Learning-data rules: see `src/lib/verba/AGENTS.md`.
-- Freemium: `src/lib/verba/plan.ts` is the single entitlement source; `PREMIUM_ENABLED=false` disables all gates, limits and Premium UI during testing. Premium gates use `usePlan` + `PremiumGate`. Why: real billing/server enforcement plugs in there later.
+- Freemium: `src/lib/verba/plan.ts` is the single entitlement source; Premium UI and tap-triggered gates use `usePlan` + `PremiumGate`. Why: real billing/server enforcement plugs in there later.
 - Completed training sessions retain their points when a word set is deleted; the session foreign key uses `ON DELETE SET NULL`. Why: earned totals are permanent history.

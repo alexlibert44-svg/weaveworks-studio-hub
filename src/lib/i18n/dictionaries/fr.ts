@@ -438,4 +438,6 @@ export const fr: Dictionary = {
   "premium.upgradeCta": "Passer à Premium",
   "premium.remaining": "{count} groupes restants aujourd’hui",
   "premium.notNow": "Pas maintenant",
+  "premium.offerBody": "Passez à Premium pour accéder à cette fonctionnalité et bien plus encore.",
+  "premium.closeOffer": "Fermer l’offre Premium",
 };

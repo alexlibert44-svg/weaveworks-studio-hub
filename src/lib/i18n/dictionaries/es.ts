@@ -438,4 +438,6 @@ export const es: Dictionary = {
   "premium.upgradeCta": "Mejorar a Premium",
   "premium.remaining": "Quedan {count} grupos hoy",
   "premium.notNow": "Ahora no",
+  "premium.offerBody": "Obtén Premium para acceder a esta función y mucho más.",
+  "premium.closeOffer": "Cerrar la oferta Premium",
 };

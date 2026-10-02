@@ -438,4 +438,6 @@ export const ar: Dictionary = {
   "premium.upgradeCta": "الترقية إلى Premium",
   "premium.remaining": "متبقٍ اليوم: {count} مجموعات",
   "premium.notNow": "ليس الآن",
+  "premium.offerBody": "احصل على Premium للوصول إلى هذه الميزة والمزيد.",
+  "premium.closeOffer": "إغلاق عرض Premium",
 };

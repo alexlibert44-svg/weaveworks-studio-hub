@@ -198,7 +198,7 @@ export function SentenceInvite({ onStart, onSkip }: { onStart: () => void; onSki
         <h1 className="text-xl font-bold">{t("review.inviteTitle")}</h1>
         <p className="mt-3 text-sm text-muted-foreground">{t("review.inviteBody")}</p>
       </div>
-      {gated ? <PremiumGate className="mt-6" body={t("premium.sentencesBody")} onClose={() => setGated(false)} /> : null}
+      {gated ? <PremiumGate className="mt-6" body={t("premium.offerBody")} onClose={() => setGated(false)} /> : null}
       <Button size="lg" className="mt-8 w-full rounded-2xl" onClick={() => (isPremium ? onStart() : setGated(true))}>
         <PremiumCrown /> {t("review.startSentences")}
       </Button>

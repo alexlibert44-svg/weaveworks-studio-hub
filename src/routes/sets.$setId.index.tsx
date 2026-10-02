@@ -365,7 +365,7 @@ function SetDetail() {
               </>
             )}
           </Button>
-          {formsGated ? <PremiumGate className="mt-4" body={t("premium.formsBody")} onClose={() => setFormsGated(false)} /> : null}
+          {formsGated ? <PremiumGate className="mt-4" body={t("premium.offerBody")} onClose={() => setFormsGated(false)} /> : null}
           {generate.error ? (
             <p className="mt-3 text-xs text-destructive">{generate.error.message}</p>
           ) : null}

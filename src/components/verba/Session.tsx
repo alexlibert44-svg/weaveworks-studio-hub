@@ -622,9 +622,9 @@ function SpeakStep({
               <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-accent opacity-40" />
             ) : null}
             {state === "analyzing" ? (
-              <Loader2 className="relative size-8 animate-spin" />
+              <Loader2 className="relative size-8 animate-spin text-action-foreground" />
             ) : (
-              <Mic className="relative size-8" />
+              <Mic className="relative size-8 text-action-foreground" />
             )}
           </button>
           <p className="text-center text-sm font-semibold text-primary" aria-live="polite">

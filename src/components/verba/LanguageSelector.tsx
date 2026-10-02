@@ -17,9 +17,13 @@ const COUNTRY: Record<string, keyof typeof Flags> = {
 
 function Flag({ code }: { code: string }) {
   const key = COUNTRY[code];
-  if (!key) return <span aria-hidden="true" className="h-4 w-6 shrink-0" />;
+  if (!key) return <span aria-hidden="true" className="h-[18px] w-[27px] shrink-0" />;
   const Icon = Flags[key];
-  return <Icon aria-hidden="true" className="h-4 w-6 shrink-0 rounded-sm" />;
+  return (
+    <span aria-hidden="true" className="flex h-[18px] w-[27px] shrink-0 overflow-hidden rounded-[3px] ring-1 ring-foreground/15 shadow-sm">
+      <Icon className="block h-full w-full object-cover" />
+    </span>
+  );
 }
 
 export function LanguageSelector({ label, value, languages, onChange, disabled, inFrame = false }: {
