@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PracticeRouteImport } from './routes/practice'
+import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
@@ -41,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
 const PracticeRoute = PracticeRouteImport.update({
   id: '/practice',
   path: '/practice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/add': typeof AddRoute
   '/auth': typeof AuthRoute
   '/practice': typeof PracticeRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/add': typeof AddRoute
   '/auth': typeof AuthRoute
   '/practice': typeof PracticeRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/add': typeof AddRoute
   '/auth': typeof AuthRoute
   '/practice': typeof PracticeRoute
+  '/premium': typeof PremiumRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/add'
     | '/auth'
     | '/practice'
+    | '/premium'
     | '/profile'
     | '/reset-password'
     | '/review'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/add'
     | '/auth'
     | '/practice'
+    | '/premium'
     | '/profile'
     | '/reset-password'
     | '/review'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/add'
     | '/auth'
     | '/practice'
+    | '/premium'
     | '/profile'
     | '/reset-password'
     | '/review'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AddRoute: typeof AddRoute
   AuthRoute: typeof AuthRoute
   PracticeRoute: typeof PracticeRoute
+  PremiumRoute: typeof PremiumRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/practice'
       fullPath: '/practice'
       preLoaderRoute: typeof PracticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   AddRoute: AddRoute,
   AuthRoute: AuthRoute,
   PracticeRoute: PracticeRoute,
+  PremiumRoute: PremiumRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
