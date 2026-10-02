@@ -170,7 +170,6 @@ function ProfilePage() {
           label={t("profile.pointsTotal")}
           value={points?.points ?? 0}
           icon={<Star className="size-4 text-accent" />}
-          note={t("profile.pointsSplit", { set: points?.setPoints ?? 0, single: points?.singlePoints ?? 0 })}
         />
       </ul>
     </AppShell>

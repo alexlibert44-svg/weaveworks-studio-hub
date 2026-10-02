@@ -393,7 +393,6 @@ export const es: Dictionary = {
   "practice.preparing": "Preparando tus palabras…",
   "profile.points": "Puntos",
   "profile.pointsTotal": "Puntos totales",
-  "profile.pointsSplit": "Listas {set} · Palabras sueltas {single}",
   "results.maxSet": "Entrenamiento de lista · hasta 15 puntos",
   "results.maxSingle": "Entrenamiento de una palabra · hasta 5 puntos",
   "profile.sessions": "Sesiones completadas",

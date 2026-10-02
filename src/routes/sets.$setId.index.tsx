@@ -94,6 +94,7 @@ function SetDetail() {
   });
 
   const [renaming, setRenaming] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [newName, setNewName] = useState("");
   const [nameError, setNameError] = useState(false);
   const rename = useMutation({
@@ -174,7 +175,7 @@ function SetDetail() {
           variant="ghost"
           size="icon"
           aria-label={t("common.delete")}
-          onClick={() => remove.mutate()}
+          onClick={() => setConfirmDelete(true)}
           disabled={remove.isPending}
         >
           <Trash2 className="size-5 text-destructive" />
@@ -215,6 +216,29 @@ function SetDetail() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="max-w-[calc(100%-2rem)] rounded-2xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("sets.deleteTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("sets.deleteBody")}</p>
+          <DialogFooter className="mt-4 flex-row gap-2">
+            <Button type="button" variant="secondary" className="flex-1 rounded-xl" onClick={() => setConfirmDelete(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="flex-1 rounded-xl"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              {remove.isPending ? <Loader2 className="size-4 animate-spin" /> : null} {t("common.delete")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
