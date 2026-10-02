@@ -18,3 +18,4 @@
 - Learning-data rules: see `src/lib/verba/AGENTS.md`.
 - Freemium: `src/lib/verba/plan.ts` is the single entitlement source; Premium UI and tap-triggered gates use `usePlan` + `PremiumGate`. Why: real billing/server enforcement plugs in there later.
 - Completed training sessions retain their points when a word set is deleted; the session foreign key uses `ON DELETE SET NULL`. Why: earned totals are permanent history.
+- Language selectors derive localized language and country labels from `Intl.DisplayNames` using the app/native locale. Why: labels stay standardized and independent of the learning language.
