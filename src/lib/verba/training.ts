@@ -2,6 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { localDay } from "./api";
 
+export type TrainingScope = "set" | "single";
+export const MAX_POINTS: Record<TrainingScope, number> = { set: 15, single: 5 };
+
 /** Result of a completed training session, computed by the database from real answers. */
 export interface TrainingResult {
   id: string;
@@ -13,6 +16,7 @@ export interface TrainingResult {
   /** null when the session had no answers. */
   accuracy: number | null;
   points: number;
+  scope: TrainingScope;
 }
 
 /** Opens a new training session row (always starts "active" with no results). */
@@ -21,12 +25,15 @@ export async function startTrainingSession(input: {
   setId: string | null;
   kind: "words" | "forms";
   targetLanguage: string;
+  /** "single" = one Original Word / Derived Form (max 5 points); "set" = Word Set training (max 15). */
+  scope?: TrainingScope;
 }): Promise<void> {
   const { error } = await supabase.from("training_sessions").insert({
     id: input.id,
     set_id: input.setId,
     kind: input.kind,
     target_language: input.targetLanguage,
+    scope: input.scope ?? "set",
   });
   // A retry of the same id is fine: the row already exists.
   if (error && error.code !== "23505") throw error;
@@ -50,12 +57,13 @@ export async function completeTrainingSession(id: string, activeSeconds: number)
     corrected: Number(r["corrected"] ?? 0),
     accuracy: r["accuracy"] == null ? null : Number(r["accuracy"]),
     points: Number(r["points"] ?? 0),
+    scope: r["scope"] === "single" ? "single" : "set",
   };
 }
 
-/** Points rule shared with the database: ROUND(accuracy/100 × 20). */
-export function pointsFor(accuracy: number | null): number {
-  return accuracy == null ? 0 : Math.round((accuracy / 100) * 20);
+/** Points rule shared with the database: ROUND(accuracy/100 × max), max 15 (set) or 5 (single). */
+export function pointsFor(accuracy: number | null, scope: TrainingScope = "set"): number {
+  return accuracy == null ? 0 : Math.round((accuracy / 100) * MAX_POINTS[scope]);
 }
 
 export function formatDuration(seconds: number): string {

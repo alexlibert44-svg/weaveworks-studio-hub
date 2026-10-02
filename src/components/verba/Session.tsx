@@ -107,6 +107,8 @@ interface SessionProps {
   onProgress?: (index: number) => void;
   /** When set, the last word hands control back instead of showing the results screen. */
   onComplete?: (info: { trainingId: string; activeSeconds: number }) => void;
+  /** Points scope: single-word/form training earns max 5, set training max 15. */
+  scope?: "set" | "single";
 }
 
 export function Session({
@@ -121,6 +123,7 @@ export function Session({
   initialIndex = 0,
   onProgress,
   onComplete,
+  scope = "set",
 }: SessionProps) {
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
