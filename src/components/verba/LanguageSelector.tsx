@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { language, type LanguageMeta } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
 
-// Arabic is a language spoken across many countries: it gets no national flag.
 const COUNTRY: Record<string, keyof typeof Flags> = {
-  en: "GB", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "PT",
+  ar: "SA", en: "GB", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "PT",
   nl: "NL", tr: "TR", ru: "RU", uk: "UA", pl: "PL", sv: "SE", el: "GR",
   he: "IL", fa: "IR", ur: "PK", hi: "IN", id: "ID", vi: "VN", th: "TH",
   ja: "JP", ko: "KR", zh: "CN",
