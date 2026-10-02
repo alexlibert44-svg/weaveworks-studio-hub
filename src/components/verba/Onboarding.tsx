@@ -21,7 +21,7 @@ const GOALS = [5, 10, 15, 30];
  */
 export function Onboarding() {
   const { deviceId, learner, refresh } = useLearner();
-  const { countryName, languageName, t } = useI18n();
+  const { t } = useI18n();
   const [step, setStep] = useState(1);
   const [target, setTarget] = useState<string | null>(null);
   const [goal, setGoal] = useState(learner.daily_goal_minutes || 10);
@@ -144,7 +144,7 @@ function LanguageStep({
   languages?: LanguageMeta[];
   onSelect: (code: string) => void;
 }) {
-  const { t } = useI18n();
+  const { countryName, languageName, t } = useI18n();
   const [search, setSearch] = useState("");
 
   const results = useMemo<LanguageMeta[]>(() => {
