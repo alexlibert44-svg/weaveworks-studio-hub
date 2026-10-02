@@ -9,6 +9,8 @@ import { AppShell, PageTitle } from "@/components/verba/AppShell";
 import { useLearner } from "@/components/verba/AppGate";
 import { useI18n } from "@/lib/i18n";
 import { createSet } from "@/lib/verba/api";
+import { usePlan } from "@/lib/verba/plan";
+import { PremiumGate } from "@/components/verba/Premium";
 
 const MIN_WORDS = 4;
 const MAX_WORDS = 10;
@@ -44,6 +46,8 @@ function AddPage() {
   const [draft, setDraft] = useState("");
   const [words, setWords] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const { remaining } = usePlan(deviceId);
+  const limitReached = remaining === 0;
 
   // The typed-but-not-yet-added word still counts: otherwise the button looks
   // disabled after the learner types their fourth word.
@@ -67,6 +71,7 @@ function AddPage() {
     onSuccess: async (setId) => {
       await queryClient.invalidateQueries({ queryKey: ["sets", deviceId] });
       await queryClient.invalidateQueries({ queryKey: ["due", deviceId] });
+      await queryClient.invalidateQueries({ queryKey: ["sets-today", deviceId] });
       void navigate({ to: "/sets/$setId", params: { setId } });
     },
   });
@@ -103,6 +108,10 @@ function AddPage() {
   return (
     <AppShell>
       <PageTitle title={t("add.title")} subtitle={t("add.subtitle")} />
+      {remaining !== null && !limitReached ? (
+        <p className="-mt-3 mb-4 text-xs font-semibold text-primary-deep" role="status">{t("premium.remaining", { count: remaining })}</p>
+      ) : null}
+      {limitReached ? <PremiumGate className="mb-5" title={t("premium.limitReached")} body={t("premium.limitBody")} /> : null}
 
       <label className="block text-sm font-semibold" htmlFor="set-name">
         {t("add.nameLabel")}
@@ -178,9 +187,9 @@ function AddPage() {
       <Button
         size="lg"
         className="mt-6 w-full rounded-2xl"
-        disabled={allWords.length < MIN_WORDS || allWords.length > MAX_WORDS || create.isPending}
+        disabled={limitReached || allWords.length < MIN_WORDS || allWords.length > MAX_WORDS || create.isPending}
         onClick={() => {
-          if (create.isPending) return;
+          if (create.isPending || limitReached) return;
           if (pending) {
             setWords(allWords);
             setDraft("");

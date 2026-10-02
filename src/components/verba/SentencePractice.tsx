@@ -4,12 +4,15 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useLearner } from "@/components/verba/AppGate";
+import { PremiumCrown, PremiumGate } from "@/components/verba/Premium";
 import { MasteryBar } from "@/components/verba/MasteryPill";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { evaluateSentence, type SentenceEvaluation } from "@/lib/verba/sentence.functions";
 import { handleAuthFailure } from "@/lib/verba/session-token";
+import { usePlan } from "@/lib/verba/plan";
 import type { Word } from "@/lib/verba/types";
 
 type Attempt = SentenceEvaluation & { sentence: string };
@@ -186,13 +189,19 @@ export function SentencePractice({
 
 export function SentenceInvite({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
   const { t } = useI18n();
+  const { deviceId } = useLearner();
+  const { isPremium } = usePlan(deviceId);
+  const [gated, setGated] = useState(false);
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
       <div className="card-surface w-full p-6">
         <h1 className="text-xl font-bold">{t("review.inviteTitle")}</h1>
         <p className="mt-3 text-sm text-muted-foreground">{t("review.inviteBody")}</p>
       </div>
-      <Button size="lg" className="mt-8 w-full rounded-2xl" onClick={onStart}>{t("review.startSentences")}</Button>
+      {gated ? <PremiumGate className="mt-6" body={t("premium.sentencesBody")} onClose={() => setGated(false)} /> : null}
+      <Button size="lg" className="mt-8 w-full rounded-2xl" onClick={() => (isPremium ? onStart() : setGated(true))}>
+        <PremiumCrown /> {t("review.startSentences")}
+      </Button>
       <Button size="lg" variant="secondary" className="mt-3 w-full rounded-2xl" onClick={onSkip}>
         {t("review.skipToResults")}
       </Button>

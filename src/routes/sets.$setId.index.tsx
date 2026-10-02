@@ -10,6 +10,8 @@ import { posLabel } from "@/lib/verba/pos";
 import { MasteryBar, StatePill } from "@/components/verba/MasteryPill";
 import { useI18n } from "@/lib/i18n";
 import { language } from "@/lib/i18n/languages";
+import { PremiumCrown, PremiumGate } from "@/components/verba/Premium";
+import { usePlan } from "@/lib/verba/plan";
 import { createForms, deleteSet, getSet } from "@/lib/verba/api";
 import { prepareSet, wordReady } from "@/lib/verba/analysis";
 import {
@@ -93,6 +95,8 @@ function SetDetail() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["set", setId] }),
   });
 
+  const { isPremium } = usePlan(deviceId);
+  const [formsGated, setFormsGated] = useState(false);
   const generate = useMutation({
     mutationFn: () =>
       createForms({
@@ -253,7 +257,7 @@ function SetDetail() {
           <p className="mt-1 text-xs text-muted-foreground">{t("set.noFormsHint")}</p>
           <Button
             className="mt-4 rounded-xl"
-            onClick={() => generate.mutate()}
+            onClick={() => (isPremium ? generate.mutate() : setFormsGated(true))}
             disabled={generate.isPending}
           >
             {generate.isPending ? (
@@ -261,9 +265,12 @@ function SetDetail() {
                 <Loader2 className="size-4 animate-spin" /> {t("set.creatingForms")}
               </>
             ) : (
-              t("set.createForms")
+              <>
+                <PremiumCrown /> {t("set.createForms")}
+              </>
             )}
           </Button>
+          {formsGated ? <PremiumGate className="mt-4" body={t("premium.formsBody")} onClose={() => setFormsGated(false)} /> : null}
           {generate.error ? (
             <p className="mt-3 text-xs text-destructive">{generate.error.message}</p>
           ) : null}
