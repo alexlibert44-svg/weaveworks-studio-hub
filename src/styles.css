@@ -39,6 +39,7 @@
   --color-hero-foreground: var(--hero-foreground);
   --color-hero-circle-blue: var(--hero-circle-blue);
   --color-hero-circle-purple: var(--hero-circle-purple);
+  --color-action-foreground: var(--action-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
@@ -120,11 +121,13 @@
   --hero-foreground: #FFFFFF;
   --hero-circle-blue: #A8D8FF;
   --hero-circle-purple: #DDD2FF;
-  --gradient-hero: linear-gradient(125deg, #6F63D9 0%, #8B7CF6 56%, #718FD8 100%);
-  --gradient-accent: linear-gradient(120deg, #83C9FF 0%, #A8D8FF 30%, #C7B5FF 100%);
-  --gradient-surface: linear-gradient(155deg, #FFFFFF 0%, #FFFFFF 58%, #F8F5FF 100%);
+  --action-foreground: #FFFFFF;
+  --gradient-hero: linear-gradient(125deg, #15CDE4 0%, #3289F5 31%, #6357ED 66%, #A73AE4 100%);
+  --gradient-accent: linear-gradient(110deg, #12CBE2 0%, #327FF2 38%, #6756EB 70%, #A83BE2 100%);
+  --gradient-surface: linear-gradient(150deg, color-mix(in srgb, #FFFFFF 94%, transparent) 0%, color-mix(in srgb, #F8F5FF 88%, transparent) 100%);
+  --gradient-border: linear-gradient(130deg, #49DCEB 0%, #4D91F5 36%, #7558ED 70%, #C14AD8 100%);
   --gradient-progress: linear-gradient(90deg, #83C9FF, #8B7CF6);
-  --shadow-card: 0 1px 0 #FFFFFF inset, 0 12px 25px -18px color-mix(in srgb, var(--primary-deep) 38%, transparent), 0 3px 9px -7px color-mix(in srgb, var(--accent) 55%, transparent);
+  --shadow-card: 0 1px 0 color-mix(in srgb, #FFFFFF 88%, transparent) inset, 0 14px 30px -22px color-mix(in srgb, #6756EB 48%, transparent), 0 5px 14px -12px color-mix(in srgb, #15CDE4 55%, transparent);
   --shadow-float: 0 -8px 24px -17px color-mix(in srgb, var(--primary-deep) 30%, transparent);
   --shadow-glow: 0 8px 20px -12px color-mix(in srgb, var(--primary) 55%, transparent);
 }
@@ -163,9 +166,11 @@
   --hero-foreground: #FFFFFF;
   --hero-circle-blue: #A8D8F0;
   --hero-circle-purple: #EAE8FF;
-  --gradient-hero: linear-gradient(135deg, #554CCB 0%, #6C63E8 54%, #708EDC 100%);
-  --gradient-accent: #A8A2FF;
-  --gradient-surface: #222C40;
+  --action-foreground: #FFFFFF;
+  --gradient-hero: linear-gradient(125deg, #087FAD 0%, #3268D8 35%, #6250D4 68%, #943FBE 100%);
+  --gradient-accent: linear-gradient(110deg, #0AA6C2 0%, #3478E0 39%, #7057DD 72%, #A448C3 100%);
+  --gradient-surface: linear-gradient(150deg, color-mix(in srgb, #29364D 94%, transparent), color-mix(in srgb, #222C40 88%, transparent));
+  --gradient-border: linear-gradient(130deg, #39C6D8 0%, #5289EB 38%, #8A6BE7 72%, #BB62C8 100%);
 }
 @layer base {
   * {
@@ -229,19 +234,20 @@
 }
 
 @utility card-surface {
-  background: var(--gradient-surface) padding-box, linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, white), color-mix(in srgb, var(--primary) 20%, white) 55%, color-mix(in srgb, var(--primary) 38%, white)) border-box;
+  background: var(--gradient-surface) padding-box, var(--gradient-border) border-box;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-card);
   border: 1px solid transparent;
+  backdrop-filter: blur(14px) saturate(125%);
 }
 
 @utility button-raised {
   background: var(--gradient-accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--primary-soft));
-  color: var(--primary-foreground);
-  box-shadow: 0 1px 0 color-mix(in srgb, white 80%, transparent) inset, 0 8px 16px -10px color-mix(in srgb, var(--primary-deep) 45%, transparent), 0 2px 4px -3px var(--primary-deep);
-  &:hover { filter: brightness(1.035); transform: translateY(-1px); }
-  &:active { filter: brightness(.98); transform: translateY(1px); box-shadow: 0 1px 4px -2px var(--primary-deep) inset; }
+  border: 1px solid color-mix(in srgb, var(--accent) 62%, transparent);
+  color: var(--action-foreground);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 72%, transparent) inset, 0 10px 22px -13px color-mix(in srgb, #327FF2 70%, transparent), 0 5px 13px -10px color-mix(in srgb, #A83BE2 72%, transparent);
+  &:hover { filter: brightness(1.04) saturate(1.04); transform: translateY(-1px); }
+  &:active { filter: brightness(.97); transform: translateY(1px); box-shadow: 0 2px 6px -3px color-mix(in srgb, var(--primary-deep) 65%, transparent) inset; }
   &:disabled, &[aria-disabled="true"] { filter: saturate(.5); transform: none; box-shadow: none; }
 }
 
@@ -262,9 +268,11 @@
 }
 
 .signature-frame {
-  border: 1px solid color-mix(in srgb, var(--hero-circle-blue) 45%, transparent);
+  background: var(--gradient-hero) padding-box, var(--gradient-border) border-box;
+  border: 1px solid transparent;
   border-top: 0;
-  box-shadow: 0 1px 0 color-mix(in srgb, white 28%, transparent) inset, 0 18px 32px -22px color-mix(in srgb, var(--primary-deep) 55%, transparent);
+  backdrop-filter: blur(16px) saturate(125%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 34%, transparent) inset, 0 20px 38px -25px color-mix(in srgb, #6257ED 68%, transparent), 0 8px 20px -18px color-mix(in srgb, #15CDE4 70%, transparent);
 }
 
 .signature-frame > .relative > div[class*="backdrop-blur"] {
