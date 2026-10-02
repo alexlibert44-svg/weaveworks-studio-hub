@@ -65,7 +65,7 @@ function PremiumPage() {
                     {plan.id !== "free" ? <PremiumCrown /> : null}
                     {t(plan.name)}
                   </p>
-                  <p className="mt-1 text-2xl font-bold" dir="ltr">{t(plan.price)}</p>
+                  <p className="mt-1 text-2xl font-bold">{t(plan.price)}</p>
                 </div>
                 {yearly ? (
                   <span className="rounded-full bg-premium-soft px-3 py-1 text-xs font-bold text-foreground">{t("premium.save")}</span>
