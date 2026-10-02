@@ -4,20 +4,14 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 import { language, type LanguageMeta } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
 
-const COUNTRY: Record<string, keyof typeof Flags> = {
-  ar: "SA", en: "GB", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "PT",
-  nl: "NL", tr: "TR", ru: "RU", uk: "UA", pl: "PL", sv: "SE", el: "GR",
-  he: "IL", fa: "IR", ur: "PK", hi: "IN", id: "ID", vi: "VN", th: "TH",
-  ja: "JP", ko: "KR", zh: "CN",
-};
-
 export function LanguageFlag({ code }: { code: string }) {
-  const key = COUNTRY[code];
-  if (!key) return <span aria-hidden="true" className="h-[18px] w-[27px] shrink-0" />;
-  const Icon = Flags[key];
+  const countryCode = language(code).countryCode as keyof typeof Flags;
+  const Icon = Flags[countryCode];
+  if (!Icon) return <span aria-hidden="true" className="h-[18px] w-[27px] shrink-0" />;
   return (
     <span aria-hidden="true" className="flex h-[18px] w-[27px] shrink-0">
       <Icon className="block h-full w-full" />
@@ -33,6 +27,7 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
   disabled?: boolean;
   inFrame?: boolean;
 }) {
+  const { countryName, languageName } = useI18n();
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 12, left: 12 });
   const button = useRef<HTMLButtonElement>(null);
@@ -82,7 +77,9 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
           : "w-full justify-start")}
       >
         <LanguageFlag code={value} />
-        <span className="min-w-0 flex-1 truncate text-start" dir="auto">{language(value).native}</span>
+        <span className="min-w-0 flex-1 truncate text-start" dir="auto">
+          {languageName(value)} · {countryName(value)}
+        </span>
         <ChevronDown className="size-4 shrink-0" />
       </Button>
       {open && createPortal(
@@ -109,7 +106,9 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
                 className="min-h-11 w-full justify-start gap-2 px-3 text-foreground hover:bg-secondary"
               >
                 <LanguageFlag code={item.code} />
-                <span className="min-w-0 flex-1 truncate text-start" dir="auto">{item.native}</span>
+                <span className="min-w-0 flex-1 truncate text-start" dir="auto">
+                  {languageName(item.code)} · {countryName(item.code)}
+                </span>
                 {item.code === value && <Check className="size-4 shrink-0 text-primary-deep" />}
               </Button>
             ))}

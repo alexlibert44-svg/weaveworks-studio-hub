@@ -1,7 +1,15 @@
 import type React from "react";
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 
-import { LANGUAGES, isRtl, language, speechLocale, type LanguageMeta } from "./languages";
+import {
+  LANGUAGES,
+  isRtl,
+  language,
+  localizedCountryName,
+  localizedLanguageName,
+  speechLocale,
+  type LanguageMeta,
+} from "./languages";
 import { ar } from "./dictionaries/ar";
 import { en, type Dictionary, type MessageKey } from "./dictionaries/en";
 import { es } from "./dictionaries/es";
@@ -24,6 +32,7 @@ interface I18nValue {
   targetSpeech: string;
   languages: LanguageMeta[];
   languageName: (code: string) => string;
+  countryName: (code: string) => string;
 }
 
 // Keep one context instance across hot reloads so provider and consumers stay connected.
@@ -59,7 +68,8 @@ export function I18nProvider({
       target,
       targetSpeech: speechLocale(target.code),
       languages: LANGUAGES,
-      languageName: (code: string) => language(code).native,
+      languageName: (code: string) => localizedLanguageName(code, locale),
+      countryName: (code: string) => localizedCountryName(code, locale),
     };
   }, [nativeCode, targetCode]);
 

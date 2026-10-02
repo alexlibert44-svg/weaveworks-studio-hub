@@ -21,7 +21,7 @@ const GOALS = [5, 10, 15, 30];
  */
 export function Onboarding() {
   const { deviceId, learner, refresh } = useLearner();
-  const { t } = useI18n();
+  const { countryName, languageName, t } = useI18n();
   const [step, setStep] = useState(1);
   const [target, setTarget] = useState<string | null>(null);
   const [goal, setGoal] = useState(learner.daily_goal_minutes || 10);
@@ -153,9 +153,11 @@ function LanguageStep({
       (l) =>
         query.length === 0 ||
         l.english.toLowerCase().includes(query) ||
-        l.native.toLowerCase().includes(query),
+        l.native.toLowerCase().includes(query) ||
+        languageName(l.code).toLocaleLowerCase().includes(query) ||
+        countryName(l.code).toLocaleLowerCase().includes(query),
     );
-  }, [search, exclude, languages]);
+  }, [search, exclude, languages, languageName, countryName]);
 
   return (
     <div className="animate-rise mt-8 flex flex-1 flex-col">
@@ -190,8 +192,8 @@ function LanguageStep({
               <span className="flex min-w-0 items-center gap-3">
                 <LanguageFlag code={lang.code} />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold">{lang.native}</span>
-                  <span className="block truncate text-xs text-muted-foreground">{lang.english}</span>
+                  <span className="block truncate text-sm font-bold">{languageName(lang.code)}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{countryName(lang.code)}</span>
                 </span>
               </span>
               {selected === lang.code ? <Check className="size-4 text-primary" /> : null}
