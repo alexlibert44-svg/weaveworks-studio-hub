@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppShell } from "@/components/verba/AppShell";
 import { PremiumCrown } from "@/components/verba/Premium";
+import { PREMIUM_ENABLED } from "@/lib/verba/plan";
 import { SignatureFrame } from "@/components/verba/SignatureFrame";
 import { LanguageSelector } from "@/components/verba/LanguageSelector";
 import { useLearner } from "@/components/verba/AppGate";
@@ -95,9 +96,11 @@ function Home() {
       <SignatureFrame>
         <div className="flex items-center justify-between gap-3">
           <h1 dir="ltr" className="w-fit text-3xl font-bold text-hero-foreground">LingoFlow</h1>
+          {PREMIUM_ENABLED ? (
           <Link to="/premium" aria-label={t("premium.open")} className="flex size-11 items-center justify-center rounded-full border border-hero-foreground/20 bg-hero-foreground/15 backdrop-blur-sm">
             <PremiumCrown className="size-5" />
           </Link>
+          ) : null}
         </div>
         <div className="mt-4">
           <LanguageSelector label={t("profile.target")} value={learner.learning_language} languages={TARGET_LANGUAGES} onChange={(code) => changeLanguage.mutate(code)} disabled={changeLanguage.isPending} inFrame />

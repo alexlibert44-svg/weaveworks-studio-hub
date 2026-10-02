@@ -66,6 +66,7 @@ export const fr: Dictionary = {
   "sets.dueCount": "{count} à revoir",
   "sets.notStarted": "Pas commencé",
   "sets.renameTitle": "Renommer la liste",
+  "sets.nameRequired": "Le nom ne peut pas être vide",
   "sets.deleteTitle": "Supprimer cette liste ?",
   "sets.deleteBody": "Les mots, les phrases et toute la progression seront supprimés définitivement.",
 

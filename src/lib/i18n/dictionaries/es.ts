@@ -66,6 +66,7 @@ export const es: Dictionary = {
   "sets.dueCount": "{count} pendientes",
   "sets.notStarted": "Sin empezar",
   "sets.renameTitle": "Renombrar lista",
+  "sets.nameRequired": "El nombre no puede estar vacío",
   "sets.deleteTitle": "¿Eliminar esta lista?",
   "sets.deleteBody": "Las palabras, frases y todo el progreso se borran definitivamente.",
 

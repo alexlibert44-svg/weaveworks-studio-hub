@@ -118,6 +118,8 @@ export interface SetSummary extends WordSet {
   formCount: number;
   /** Real status derived from stored per-word results. */
   status: MasteryState;
+  /** Saved target words + translations, for local search only. */
+  terms?: string[];
 }
 
 export interface WordForm {

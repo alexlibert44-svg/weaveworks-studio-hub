@@ -115,7 +115,7 @@ export async function listSets(deviceId: string, targetLanguage: string): Promis
       .eq("device_id", deviceId)
       .eq("target_language", targetLanguage)
       .order("created_at", { ascending: false }),
-    supabase.from("words").select("id, set_id"),
+    supabase.from("words").select("id, set_id, text, translation"),
     supabase.from("learning_items").select("*").eq("device_id", deviceId),
   ]);
   const { data: formRows } = await supabase
@@ -140,7 +140,8 @@ export async function listSets(deviceId: string, targetLanguage: string): Promis
     const formCount = new Set(
       (formRows ?? []).filter((f) => f.set_id === set.id && setWordIds.has(f.word_id)).map((f) => f.id),
     ).size;
-    return { ...(set as WordSet), wordCount: setWords.length, formCount, status };
+    const terms = setWords.flatMap((w) => [w.text, w.translation ?? ""]).filter(Boolean);
+    return { ...(set as WordSet), wordCount: setWords.length, formCount, status, terms };
   });
 }
 

@@ -47,7 +47,7 @@ function SetsPage() {
   const fold = (v: string) => v.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase().trim();
   const shown = useMemo(() => {
     const q = fold(query);
-    return !sets || !q ? sets : sets.filter((s) => fold(s.name).includes(q));
+    return !sets || !q ? sets : sets.filter((s) => fold(s.name).includes(q) || (s.terms ?? []).some((w) => fold(w).includes(q)));
   }, [sets, query]);
   const closeSearch = () => {
     setQuery("");

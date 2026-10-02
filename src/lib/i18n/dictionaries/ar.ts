@@ -66,6 +66,7 @@ export const ar: Dictionary = {
   "sets.dueCount": "{count} مستحقة",
   "sets.notStarted": "لم تبدأ",
   "sets.renameTitle": "إعادة تسمية المجموعة",
+  "sets.nameRequired": "لا يمكن أن يكون الاسم فارغًا",
   "sets.deleteTitle": "حذف هذه المجموعة؟",
   "sets.deleteBody": "ستُحذف الكلمات والجمل وكل التقدم في هذه المجموعة نهائيًا.",
 

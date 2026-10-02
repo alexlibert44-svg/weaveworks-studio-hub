@@ -4,9 +4,11 @@ import { Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PREMIUM_ENABLED } from "@/lib/verba/plan";
 
 /** Small gold crown marking Premium. */
 export function PremiumCrown({ className }: { className?: string }) {
+  if (!PREMIUM_ENABLED) return null;
   return <Crown aria-hidden="true" className={cn("size-4 shrink-0 fill-premium/25 text-premium", className)} />;
 }
 
