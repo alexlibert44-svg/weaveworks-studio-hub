@@ -17,3 +17,5 @@
 - [x] Improve shared multilingual typography and font rendering across the app.
 - [x] Cap the Home daily-goal count and percentage at the configured target.
 - [x] Remove resize handles and extra focus-border artifacts from exercise textareas.
+- [x] Refine shared cards, signature frames, and primary actions with the selected cyan-to-purple glass treatment.
+- [x] Verify completed-session points remain preserved when a word set is deleted.
