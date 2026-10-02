@@ -94,6 +94,7 @@ function SetDetail() {
   });
 
   const [renaming, setRenaming] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [newName, setNewName] = useState("");
   const [nameError, setNameError] = useState(false);
   const rename = useMutation({
@@ -174,7 +175,7 @@ function SetDetail() {
           variant="ghost"
           size="icon"
           aria-label={t("common.delete")}
-          onClick={() => remove.mutate()}
+          onClick={() => setConfirmDelete(true)}
           disabled={remove.isPending}
         >
           <Trash2 className="size-5 text-destructive" />
