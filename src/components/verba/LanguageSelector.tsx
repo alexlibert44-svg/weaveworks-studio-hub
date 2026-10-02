@@ -19,8 +19,8 @@ export function LanguageFlag({ code }: { code: string }) {
   if (!key) return <span aria-hidden="true" className="h-[18px] w-[27px] shrink-0" />;
   const Icon = Flags[key];
   return (
-    <span aria-hidden="true" className="flex h-[18px] w-[27px] shrink-0 overflow-hidden rounded-[3px] ring-1 ring-foreground/15 shadow-sm">
-      <Icon className="block h-full w-full object-cover" />
+    <span aria-hidden="true" className="flex h-[18px] w-[27px] shrink-0">
+      <Icon className="block h-full w-full" />
     </span>
   );
 }
