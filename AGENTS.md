@@ -16,4 +16,4 @@
 - SignatureFrame on Home/Review/Profile; shared LanguageSelector (body portal, own scroll) on Home/Settings.
 - Scope sets/reviews/stats/streaks by `target_language`. Why: languages stay isolated.
 - Learning-data rules: see `src/lib/verba/AGENTS.md`.
-- Freemium: `src/lib/verba/plan.ts` is the single entitlement source (currently always Free, no billing); Premium gates use `usePlan` + `PremiumGate`. Why: real billing/server enforcement plugs in there later.
+- Freemium: `src/lib/verba/plan.ts` is the single entitlement source; `PREMIUM_ENABLED=false` disables all gates, limits and Premium UI during testing. Premium gates use `usePlan` + `PremiumGate`. Why: real billing/server enforcement plugs in there later.

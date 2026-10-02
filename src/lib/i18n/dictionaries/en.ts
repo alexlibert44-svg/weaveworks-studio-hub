@@ -65,6 +65,7 @@ export const en = {
   "sets.dueCount": "{count} due",
   "sets.notStarted": "Not started",
   "sets.renameTitle": "Rename set",
+  "sets.nameRequired": "Name cannot be empty",
   "sets.deleteTitle": "Delete this set?",
   "sets.deleteBody": "The words, sentences and all progress in this set are removed for good.",
 

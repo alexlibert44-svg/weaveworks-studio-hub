@@ -14,6 +14,9 @@ export type Plan = "free" | "premium";
 
 export const FREE_DAILY_SETS = 4;
 
+/** Temporarily off for testing: no gates, no limits, no Premium UI. Flip to true to reintroduce. */
+export const PREMIUM_ENABLED = false;
+
 async function fetchEntitlement(): Promise<Plan> {
   return "free";
 }
@@ -32,13 +35,13 @@ async function setsCreatedToday(deviceId: string): Promise<number> {
 
 export function usePlan(deviceId: string) {
   const plan = useQuery({ queryKey: ["plan", deviceId], queryFn: fetchEntitlement });
-  const today = useQuery({ queryKey: ["sets-today", deviceId], queryFn: () => setsCreatedToday(deviceId) });
-  const isPremium = plan.data === "premium";
+  const today = useQuery({ queryKey: ["sets-today", deviceId], queryFn: () => setsCreatedToday(deviceId), enabled: PREMIUM_ENABLED });
+  const isPremium = !PREMIUM_ENABLED || plan.data === "premium";
   const used = today.data ?? 0;
   return {
     plan: plan.data ?? "free",
     isPremium,
-    loaded: plan.isSuccess && today.isSuccess,
+    loaded: !PREMIUM_ENABLED || (plan.isSuccess && today.isSuccess),
     /** null = unlimited. */
     remaining: isPremium ? null : Math.max(0, FREE_DAILY_SETS - used),
   };
