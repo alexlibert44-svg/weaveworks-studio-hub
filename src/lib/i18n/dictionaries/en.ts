@@ -437,6 +437,8 @@ export const en = {
   "premium.upgradeCta": "Upgrade to Premium",
   "premium.remaining": "{count} groups remaining today",
   "premium.notNow": "Not now",
+  "premium.offerBody": "Get Premium to access this feature and more.",
+  "premium.closeOffer": "Close Premium offer",
 } as const;
 
 export type MessageKey = keyof typeof en;

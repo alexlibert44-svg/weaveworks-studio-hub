@@ -7,19 +7,22 @@ import { Button } from "@/components/ui/button";
 import { language, type LanguageMeta } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
 
-// Arabic is a language spoken across many countries: it gets no national flag.
 const COUNTRY: Record<string, keyof typeof Flags> = {
-  en: "GB", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "PT",
+  ar: "SA", en: "GB", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "PT",
   nl: "NL", tr: "TR", ru: "RU", uk: "UA", pl: "PL", sv: "SE", el: "GR",
   he: "IL", fa: "IR", ur: "PK", hi: "IN", id: "ID", vi: "VN", th: "TH",
   ja: "JP", ko: "KR", zh: "CN",
 };
 
-function Flag({ code }: { code: string }) {
+export function LanguageFlag({ code }: { code: string }) {
   const key = COUNTRY[code];
-  if (!key) return <span aria-hidden="true" className="h-4 w-6 shrink-0" />;
+  if (!key) return <span aria-hidden="true" className="h-[18px] w-[27px] shrink-0" />;
   const Icon = Flags[key];
-  return <Icon aria-hidden="true" className="h-4 w-6 shrink-0 rounded-sm" />;
+  return (
+    <span aria-hidden="true" className="flex h-[18px] w-[27px] shrink-0 overflow-hidden rounded-[3px] ring-1 ring-foreground/15 shadow-sm">
+      <Icon className="block h-full w-full object-cover" />
+    </span>
+  );
 }
 
 export function LanguageSelector({ label, value, languages, onChange, disabled, inFrame = false }: {
@@ -78,7 +81,7 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
           ? "border border-hero-foreground/40 bg-hero-foreground/15 text-hero-foreground shadow-card backdrop-blur-sm hover:bg-hero-foreground/25 hover:text-hero-foreground"
           : "w-full justify-start")}
       >
-        <Flag code={value} />
+        <LanguageFlag code={value} />
         <span className="min-w-0 flex-1 truncate text-start" dir="auto">{language(value).native}</span>
         <ChevronDown className="size-4 shrink-0" />
       </Button>
@@ -105,7 +108,7 @@ export function LanguageSelector({ label, value, languages, onChange, disabled, 
                 onClick={() => { setOpen(false); if (item.code !== value) onChange(item.code); }}
                 className="min-h-11 w-full justify-start gap-2 px-3 text-foreground hover:bg-secondary"
               >
-                <Flag code={item.code} />
+                <LanguageFlag code={item.code} />
                 <span className="min-w-0 flex-1 truncate text-start" dir="auto">{item.native}</span>
                 {item.code === value && <Check className="size-4 shrink-0 text-primary-deep" />}
               </Button>

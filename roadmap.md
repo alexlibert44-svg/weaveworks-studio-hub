@@ -19,3 +19,6 @@
 - [x] Remove resize handles and extra focus-border artifacts from exercise textareas.
 - [x] Refine shared cards, signature frames, and primary actions with the selected cyan-to-purple glass treatment.
 - [x] Verify completed-session points remain preserved when a word set is deleted.
+- [x] Restore the Premium crown and on-demand offer cards without replacing learning content.
+- [x] Standardize graphical language flags and make the recording microphone icon white.
+- [x] Verify Premium navigation, gate dismissal, flags, and recording control in the preview.
