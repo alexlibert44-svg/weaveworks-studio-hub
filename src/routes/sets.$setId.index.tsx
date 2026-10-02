@@ -102,7 +102,7 @@ function SetDetail() {
       setRenaming(false);
       await queryClient.invalidateQueries({ queryKey: ["set", setId] });
       await queryClient.invalidateQueries({ queryKey: ["sets"] });
-      await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      await queryClient.invalidateQueries({ queryKey: ["review-units"] });
     },
   });
   const submitRename = () => {
