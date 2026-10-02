@@ -155,8 +155,9 @@ export function Session({
       setId: firstItem?.item.set_id ?? null,
       kind: firstItem?.word.form_label ? "forms" : "words",
       targetLanguage,
+      scope,
     }).catch(() => undefined);
-  }, [firstItem, targetLanguage]);
+  }, [firstItem, targetLanguage, scope]);
 
   useEffect(() => {
     clock.current = createActivityClock();
@@ -174,12 +175,13 @@ export function Session({
         setId: firstItem?.item.set_id ?? null,
         kind: firstItem?.word.form_label ? "forms" : "words",
         targetLanguage,
+      scope,
       });
       setResult(await completeTrainingSession(sessionId.current, clock.current?.seconds ?? 0));
     } catch (e) {
       setResultError(e instanceof Error ? e.message : String(e));
     }
-  }, [firstItem, targetLanguage]);
+  }, [firstItem, targetLanguage, scope]);
 
   const unit = units[index];
   const total = units.length;
