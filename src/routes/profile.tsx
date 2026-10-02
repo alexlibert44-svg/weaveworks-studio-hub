@@ -170,13 +170,14 @@ function ProfilePage() {
           label={t("profile.pointsTotal")}
           value={points?.points ?? 0}
           icon={<Star className="size-4 text-accent" />}
+          note={t("profile.pointsSplit", { set: points?.setPoints ?? 0, single: points?.singlePoints ?? 0 })}
         />
       </ul>
     </AppShell>
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon?: React.ReactNode }) {
+function StatCard({ label, value, icon, note }: { label: string; value: string | number; icon?: React.ReactNode; note?: string }) {
   return (
     <li className="card-surface p-4">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -184,6 +185,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
         {label}
       </div>
       <p className="mt-1 text-xl font-bold">{value}</p>
+      {note ? <p className="mt-0.5 text-[0.7rem] text-muted-foreground">{note}</p> : null}
     </li>
   );
 }

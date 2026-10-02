@@ -53,6 +53,9 @@ export function TrainingResults({
         <Stat icon={<Star className="size-5" />} label={t("results.points")} value={`+${result.points}`} />
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">
+        {t(result.scope === "single" ? "results.maxSingle" : "results.maxSet")}
+      </p>
+      <p className="mt-1 text-center text-xs text-muted-foreground">
         {result.total > 0
           ? t("results.answers", { correct: result.correct, total: result.total })
           : t("results.noAnswers")}

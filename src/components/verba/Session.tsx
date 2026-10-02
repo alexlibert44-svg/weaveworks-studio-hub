@@ -107,6 +107,8 @@ interface SessionProps {
   onProgress?: (index: number) => void;
   /** When set, the last word hands control back instead of showing the results screen. */
   onComplete?: (info: { trainingId: string; activeSeconds: number }) => void;
+  /** Points scope: single-word/form training earns max 5, set training max 15. */
+  scope?: "set" | "single";
 }
 
 export function Session({
@@ -121,6 +123,7 @@ export function Session({
   initialIndex = 0,
   onProgress,
   onComplete,
+  scope = "set",
 }: SessionProps) {
   /** One training session id per mount/restart, stored with every graded attempt. */
   const sessionId = useRef<string>(crypto.randomUUID());
@@ -152,8 +155,9 @@ export function Session({
       setId: firstItem?.item.set_id ?? null,
       kind: firstItem?.word.form_label ? "forms" : "words",
       targetLanguage,
+      scope,
     }).catch(() => undefined);
-  }, [firstItem, targetLanguage]);
+  }, [firstItem, targetLanguage, scope]);
 
   useEffect(() => {
     clock.current = createActivityClock();
@@ -171,12 +175,13 @@ export function Session({
         setId: firstItem?.item.set_id ?? null,
         kind: firstItem?.word.form_label ? "forms" : "words",
         targetLanguage,
+      scope,
       });
       setResult(await completeTrainingSession(sessionId.current, clock.current?.seconds ?? 0));
     } catch (e) {
       setResultError(e instanceof Error ? e.message : String(e));
     }
-  }, [firstItem, targetLanguage]);
+  }, [firstItem, targetLanguage, scope]);
 
   const unit = units[index];
   const total = units.length;

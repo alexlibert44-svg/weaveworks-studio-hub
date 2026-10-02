@@ -552,6 +552,7 @@ export type Database = {
           kind: string
           local_day: string | null
           points: number
+          scope: string
           set_id: string | null
           started_at: string
           status: string
@@ -570,6 +571,7 @@ export type Database = {
           kind?: string
           local_day?: string | null
           points?: number
+          scope?: string
           set_id?: string | null
           started_at?: string
           status?: string
@@ -588,6 +590,7 @@ export type Database = {
           kind?: string
           local_day?: string | null
           points?: number
+          scope?: string
           set_id?: string | null
           started_at?: string
           status?: string

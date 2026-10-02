@@ -665,6 +665,10 @@ export function trainingStreak(days: string[], today = new Date()): number {
 
 export interface PointsSummary {
   points: number;
+  /** Points from Word Set training (max 15 each). */
+  setPoints: number;
+  /** Points from single word/form training (max 5 each). */
+  singlePoints: number;
   sessions: number;
   /** null when no answers were recorded yet. */
   accuracy: number | null;
@@ -674,7 +678,7 @@ export interface PointsSummary {
 export async function getPointsSummary(deviceId: string): Promise<PointsSummary> {
   const { data, error } = await supabase
     .from("training_sessions")
-    .select("points, total_attempts, correct_attempts")
+    .select("points, total_attempts, correct_attempts, scope")
     .eq("device_id", deviceId)
     .eq("status", "completed");
   if (error) throw error;
@@ -683,6 +687,8 @@ export async function getPointsSummary(deviceId: string): Promise<PointsSummary>
   const correct = rows.reduce((a, r) => a + (r.correct_attempts ?? 0), 0);
   return {
     points: rows.reduce((a, r) => a + (r.points ?? 0), 0),
+    setPoints: rows.filter((r) => r.scope !== "single").reduce((a, r) => a + (r.points ?? 0), 0),
+    singlePoints: rows.filter((r) => r.scope === "single").reduce((a, r) => a + (r.points ?? 0), 0),
     sessions: rows.filter((r) => (r.total_attempts ?? 0) > 0).length,
     accuracy: total > 0 ? Math.round((correct / total) * 100) : null,
   };
