@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LanguageFlag } from "@/components/verba/LanguageSelector";
 import { useI18n } from "@/lib/i18n";
 import { LANGUAGES, TARGET_LANGUAGES, type LanguageMeta } from "@/lib/i18n/languages";
 import { cn } from "@/lib/utils";
@@ -186,9 +187,12 @@ function LanguageStep({
                   : "border-border bg-card",
               )}
             >
-              <span>
-                <span className="block text-sm font-bold">{lang.native}</span>
-                <span className="block text-xs text-muted-foreground">{lang.english}</span>
+              <span className="flex min-w-0 items-center gap-3">
+                <LanguageFlag code={lang.code} />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold">{lang.native}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{lang.english}</span>
+                </span>
               </span>
               {selected === lang.code ? <Check className="size-4 text-primary" /> : null}
             </button>
