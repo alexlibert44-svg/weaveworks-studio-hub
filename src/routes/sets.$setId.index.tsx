@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Loader2, Play, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, Pencil, Play, Sparkles, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +15,7 @@ import { useI18n } from "@/lib/i18n";
 import { language } from "@/lib/i18n/languages";
 import { PremiumCrown, PremiumGate } from "@/components/verba/Premium";
 import { usePlan } from "@/lib/verba/plan";
-import { createForms, deleteSet, getSet } from "@/lib/verba/api";
+import { createForms, deleteSet, getSet, renameSet } from "@/lib/verba/api";
 import { prepareSet, wordReady } from "@/lib/verba/analysis";
 import {
   FORM_SKILLS,
@@ -91,6 +93,24 @@ function SetDetail() {
     },
   });
 
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [nameError, setNameError] = useState(false);
+  const rename = useMutation({
+    mutationFn: (name: string) => renameSet(setId, name),
+    onSuccess: async () => {
+      setRenaming(false);
+      await queryClient.invalidateQueries({ queryKey: ["set", setId] });
+      await queryClient.invalidateQueries({ queryKey: ["sets"] });
+      await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+    },
+  });
+  const submitRename = () => {
+    const value = newName.trim();
+    if (!value) return setNameError(true);
+    rename.mutate(value);
+  };
+
   const reanalyze = useMutation({
     mutationFn: () => prepareSet(deviceId, setId),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["set", setId] }),
@@ -137,6 +157,19 @@ function SetDetail() {
             <ArrowLeft className="size-5 rtl:rotate-180" />
           </Link>
         </Button>
+        <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("common.rename")}
+          onClick={() => {
+            setNewName(set.name);
+            setNameError(false);
+            setRenaming(true);
+          }}
+        >
+          <Pencil className="size-5" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -146,7 +179,44 @@ function SetDetail() {
         >
           <Trash2 className="size-5 text-destructive" />
         </Button>
+        </div>
       </div>
+
+      <Dialog open={renaming} onOpenChange={setRenaming}>
+        <DialogContent className="max-w-[calc(100%-2rem)] rounded-2xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("sets.renameTitle")}</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitRename();
+            }}
+          >
+            <Input
+              autoFocus
+              dir="auto"
+              value={newName}
+              onChange={(e) => {
+                setNewName(e.target.value);
+                setNameError(false);
+              }}
+              aria-label={t("sets.renameTitle")}
+              className="h-12 rounded-2xl"
+            />
+            {nameError ? <p className="mt-2 text-xs font-semibold text-destructive" role="alert">{t("sets.nameRequired")}</p> : null}
+            {rename.isError ? <p className="mt-2 text-xs font-semibold text-destructive" role="alert">{t("add.failed")}</p> : null}
+            <DialogFooter className="mt-4 flex-row gap-2">
+              <Button type="button" variant="secondary" className="flex-1 rounded-xl" onClick={() => setRenaming(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button type="submit" className="flex-1 rounded-xl" disabled={rename.isPending}>
+                {rename.isPending ? <Loader2 className="size-4 animate-spin" /> : null} {t("common.save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <h1 className="mt-2 text-2xl font-bold">{set.name}</h1>
       <div className="mt-2 flex items-center gap-2">
